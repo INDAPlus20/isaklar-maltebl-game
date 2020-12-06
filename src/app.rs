@@ -33,6 +33,10 @@ pub const P2_BOARD: (f32, f32, f32, f32) = (
     (GRID_SIZE.1 as f32) * BLOCK_SIZE.0, // height
 );
 
+
+// size of the attack meter increments
+const ATTACK_METER: (f32, f32) = (BLOCK_SIZE.0 / 2.0, BLOCK_SIZE.1);
+
 const BACKGROUND_COLOR: Color = Color::new(25.0 / 255.0, 172.0 / 255.0, 244.0 / 255.0, 1.0);
 const BOARD_BACKGROUND: Color = Color::new(0.0, 0.0, 0.0, 0.8);
 const GRID_COLOR: Color = Color::new(100.0 / 255.0, 100.0 / 255.0, 100.0 / 255.0, 1.0);
@@ -138,6 +142,47 @@ impl event::EventHandler for AppState {
                     )
                     .expect("msg");
                 }
+            }
+        }
+
+        // draw attack meters
+        let p1_meter: Vec<(u8, u8)> = vec![(2, 1), (3, 6)];
+        let p2_meter: Vec<(u8, u8)> = vec![(6, 1), (1, 6)];
+
+        let rectangle = Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, ATTACK_METER.0 as i32, ATTACK_METER.1 as i32),
+            PALETTE[7],
+        )?;
+
+        let mut i = 1;
+        for attack in p1_meter {
+            for _l in 0..attack.0{
+                graphics::draw(
+                    ctx,
+                    &rectangle,
+                    (ggez::mint::Point2 {
+                        x: P1_BOARD.0 - ATTACK_METER.0,
+                        y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
+                    },),
+                )?;
+                i += 1;
+            }
+        }
+
+        let mut i = 1;
+        for attack in p2_meter {
+            for _l in 0..attack.0{
+                graphics::draw(
+                    ctx,
+                    &rectangle,
+                    (ggez::mint::Point2 {
+                        x: P2_BOARD.0 - ATTACK_METER.0,
+                        y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
+                    },),
+                )?;
+                i += 1;
             }
         }
 
