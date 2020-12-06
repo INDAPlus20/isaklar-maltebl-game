@@ -18,6 +18,7 @@ pub const BLOCK_SIZE: (f32, f32) = (20.0, 20.0);
 /// Size of the scaled-down blocks
 const SMALL_BLOCK_SIZE: (f32, f32) = (BLOCK_SIZE.0 * 0.5, BLOCK_SIZE.1 * 0.5);
 
+/// The top-left corner of the boards
 pub const P1_BOARD_PLACEMENT: (f32, f32) = (50.0, 50.0);
 pub const P2_BOARD_PLACEMENT: (f32, f32) = (SCREEN_SIZE.0 / 2.0 + 50.0, 50.0);
 
@@ -28,6 +29,7 @@ pub const P1_BOARD: (f32, f32, f32, f32) = (
     (GRID_SIZE.0 as f32) * BLOCK_SIZE.0, // width
     (GRID_SIZE.1 as f32) * BLOCK_SIZE.0, // height
 );
+/// The x y w h of the boards
 pub const P2_BOARD: (f32, f32, f32, f32) = (
     P2_BOARD_PLACEMENT.0,                // x
     P2_BOARD_PLACEMENT.1,                // y
@@ -69,7 +71,7 @@ impl AppState {
     pub fn new(ctx: &mut Context) -> AppState {
         let state = AppState {
             // Load/create resources here: images, fonts, sounds, etc.
-            players: [Player::new(), Player::new()], 
+            players: [Player::new(), Player::new()],
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
             small_block_palatte: generate_small_blocks(ctx),
@@ -231,7 +233,7 @@ impl event::EventHandler for AppState {
 
         let mut i = 1;
         for attack in p1_meter {
-            for _l in 0..attack.0{
+            for _l in 0..attack.0 {
                 graphics::draw(
                     ctx,
                     &rectangle,
@@ -246,7 +248,7 @@ impl event::EventHandler for AppState {
 
         let mut i = 1;
         for attack in p2_meter {
-            for _l in 0..attack.0{
+            for _l in 0..attack.0 {
                 graphics::draw(
                     ctx,
                     &rectangle,
@@ -276,12 +278,14 @@ impl event::EventHandler for AppState {
                 y: P2_BOARD.1,
             },),
         )?;
+
+        // present the graphics to the graphics engine
         graphics::present(ctx)?;
 
         Ok(())
     }
 }
-
+/// Generates the meshes for the tetromino block
 fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
     [
         Mesh::new_rectangle(
@@ -342,7 +346,7 @@ fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
         .expect("Failed creating blocks"),
     ]
 }
-
+/// generates the mesh for the grid-lines
 fn generate_grid_mesh(ctx: &mut Context) -> GameResult<Mesh> {
     let mut mesh = MeshBuilder::new();
     for x in 0..(GRID_SIZE.0 + 1) {
@@ -359,7 +363,8 @@ fn generate_grid_mesh(ctx: &mut Context) -> GameResult<Mesh> {
             ],
             GRID_LINE_WIDTH,
             GRID_COLOR,
-        ).expect("msg");
+        )
+        .expect("msg");
     }
     for y in 0..(GRID_SIZE.1 + 1) {
         mesh.line(
@@ -375,10 +380,12 @@ fn generate_grid_mesh(ctx: &mut Context) -> GameResult<Mesh> {
             ],
             GRID_LINE_WIDTH,
             GRID_COLOR,
-        ).expect("msg");
+        )
+        .expect("msg");
     }
 
     mesh.build(ctx)
+}
 
 /// generates the meshes for the scaled-down tetromino for next_piece and saved_piece
 fn generate_small_blocks(ctx: &mut Context) -> [Mesh; 8] {
