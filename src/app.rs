@@ -15,7 +15,9 @@ const GRID_LINE_WIDTH: f32 = 1.0;
 /// Size of each block
 pub const BLOCK_SIZE: (f32, f32) = (20.0, 20.0);
 
-// The top-left corner of the boards
+/// Size of the scaled-down blocks
+const SMALL_BLOCK_SIZE: (f32, f32) = (BLOCK_SIZE.0 * 0.5, BLOCK_SIZE.1 * 0.5);
+
 pub const P1_BOARD_PLACEMENT: (f32, f32) = (50.0, 50.0);
 pub const P2_BOARD_PLACEMENT: (f32, f32) = (SCREEN_SIZE.0 / 2.0 + 50.0, 50.0);
 
@@ -33,6 +35,9 @@ pub const P2_BOARD: (f32, f32, f32, f32) = (
     (GRID_SIZE.1 as f32) * BLOCK_SIZE.0, // height
 );
 
+// for the next piece and saved piece boxes
+const INFO_BOX: (f32, f32) = (SMALL_BLOCK_SIZE.0 * 6.0, SMALL_BLOCK_SIZE.1 * 6.0);
+const INFO_BOX_MARGIN: (f32, f32) = (SMALL_BLOCK_SIZE.0, SMALL_BLOCK_SIZE.1);
 
 // size of the attack meter increments
 const ATTACK_METER: (f32, f32) = (BLOCK_SIZE.0 / 2.0, BLOCK_SIZE.1);
@@ -57,6 +62,7 @@ pub struct AppState {
     players: [Player; 2],
     block_palatte: [Mesh; 8],
     grid_mesh: Mesh,
+    small_block_palatte: [Mesh; 8],
 }
 
 impl AppState {
@@ -66,6 +72,7 @@ impl AppState {
             players: [Player::new(), Player::new()], 
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
+            small_block_palatte: generate_small_blocks(ctx),
         };
 
         state
@@ -108,6 +115,72 @@ impl event::EventHandler for AppState {
                 y: P2_BOARD.1,
             },),
         )?;
+
+        // draw next piece boxes
+        let rectangle = Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, INFO_BOX.0 as i32, INFO_BOX.1 as i32),
+            BOARD_BACKGROUND,
+        )?;
+
+        graphics::draw(
+            ctx,
+            &rectangle,
+            (ggez::mint::Point2 {
+                x: P1_BOARD.0 + P1_BOARD.2,
+                y: P1_BOARD.1,
+            },),
+        )?;
+
+        graphics::draw(
+            ctx,
+            &rectangle,
+            (ggez::mint::Point2 {
+                x: P2_BOARD.0 + P2_BOARD.2,
+                y: P2_BOARD.1,
+            },),
+        )?;
+
+        // draw next pieces
+        let p1_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+        let p2_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+
+        for y in 0..p1_next_piece.len() {
+            for x in 0..p1_next_piece[y].len() {
+                if p1_next_piece[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.small_block_palatte[p1_next_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P1_BOARD.0
+                                + P1_BOARD.2
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P1_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
+
+        for y in 0..p2_next_piece.len() {
+            for x in 0..p2_next_piece[y].len() {
+                if p2_next_piece[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.small_block_palatte[p2_next_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P2_BOARD.0
+                                + P2_BOARD.2
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P2_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
 
         let p1_board = self.players[0].get_board();
         let p2_board = self.players[1].get_board();
@@ -307,8 +380,67 @@ fn generate_grid_mesh(ctx: &mut Context) -> GameResult<Mesh> {
 
     mesh.build(ctx)
 
+/// generates the meshes for the scaled-down tetromino for next_piece and saved_piece
+fn generate_small_blocks(ctx: &mut Context) -> [Mesh; 8] {
+    [
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[0],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[1],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[2],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[3],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[4],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[5],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[6],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[7],
+        )
+        .expect("Failed creating blocks"),
+    ]
 }
-
 mod tests {
     use super::{AppState, SCREEN_SIZE};
     use ggez::event::{self, EventHandler};
