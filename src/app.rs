@@ -1,3 +1,5 @@
+use crate::game_data::Player;
+
 use ggez::event::{self, EventHandler};
 use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
 use ggez::nalgebra::Point2;
@@ -48,8 +50,7 @@ pub const PALETTE: [Color; 8] = [
 
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
 pub struct AppState {
-    p1_board: [[u32; 24]; 10],
-    p2_board: [[u32; 24]; 10],
+    players: [Player; 2],
     block_palatte: [Mesh; 8],
     grid_mesh: Mesh,
 }
@@ -58,72 +59,7 @@ impl AppState {
     pub fn new(ctx: &mut Context) -> AppState {
         let state = AppState {
             // Load/create resources here: images, fonts, sounds, etc.
-            p1_board: [
-                // PLACEHOLDER
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-            ],
-            p2_board: [
-                // PLACEHOLDER
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-            ],
+            players: [Player::new(), Player::new()], 
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
         };
@@ -169,13 +105,16 @@ impl event::EventHandler for AppState {
             },),
         )?;
 
+        let p1_board = self.players[0].get_board();
+        let p2_board = self.players[1].get_board();
+
         // draw blocks
-        for x in 0..self.p1_board.len() {
-            for y in 0..(self.p1_board[x].len() - 4) {
-                if self.p1_board[x][y] > 0 {
+        for y in 0..(p1_board.len() - 4) {
+            for x in 0..p1_board[y].len() {
+                if p1_board[y][x] > 0 {
                     graphics::draw(
                         ctx,
-                        &self.block_palatte[self.p1_board[x][y] as usize - 1],
+                        &self.block_palatte[p1_board[y][x] as usize - 1],
                         (ggez::mint::Point2 {
                             x: P1_BOARD.0 + (x as f32) * BLOCK_SIZE.0,
                             y: P1_BOARD.1 + P1_BOARD.3 - ((y as f32) + 1.0) * BLOCK_SIZE.1,
@@ -186,12 +125,12 @@ impl event::EventHandler for AppState {
             }
         }
 
-        for x in 0..self.p2_board.len() {
-            for y in 0..self.p2_board[x].len() {
-                if self.p2_board[x][y] > 0 {
+        for y in 0..(p2_board.len() - 4) {
+            for x in 0..p2_board[y].len() {
+                if p2_board[y][x] > 0 {
                     graphics::draw(
                         ctx,
-                        &self.block_palatte[self.p2_board[x][y] as usize - 1],
+                        &self.block_palatte[p2_board[y][x] as usize - 1],
                         (ggez::mint::Point2 {
                             x: P2_BOARD.0 + (x as f32) * BLOCK_SIZE.0,
                             y: P2_BOARD.1 + P2_BOARD.3 - ((y as f32) + 1.0) * BLOCK_SIZE.1,
