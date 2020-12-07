@@ -1,7 +1,9 @@
-use crate::game_data::Player;
+use crate::game_state::Game;
 
-use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect, Font, Text, Scale};
+use ggez::event::{self, EventHandler, KeyCode, KeyMods};
+use ggez::graphics::{
+    self, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
+};
 use ggez::nalgebra::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
 use graphics::TextFragment;
@@ -67,7 +69,7 @@ pub const PALETTE: [Color; 8] = [
 
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
 pub struct AppState {
-    players: [Player; 2],
+    game_state: Game,
     block_palatte: [Mesh; 8],
     grid_mesh: Mesh,
     small_block_palatte: [Mesh; 8],
@@ -78,7 +80,7 @@ impl AppState {
     pub fn new(ctx: &mut Context) -> AppState {
         let state = AppState {
             // Load/create resources here: images, fonts, sounds, etc.
-            players: [Player::new(), Player::new()],
+            game_state: Game::new(),
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
             small_block_palatte: generate_small_blocks(ctx),
@@ -92,10 +94,7 @@ impl AppState {
 impl event::EventHandler for AppState {
     // update the game logic
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        for player in &mut self.players {
-            player.rotate_current(true);
-            player.move_tick();
-        }
+        self.game_state.update();
         Ok(())
     }
 
@@ -254,9 +253,9 @@ impl event::EventHandler for AppState {
                 }
             }
         }
-
-        let p1_board = self.players[0].get_board();
-        let p2_board = self.players[1].get_board();
+        let boards = self.game_state.get_boards();
+        let p1_board = boards[0];
+        let p2_board = boards[1];
 
         // draw blocks
         for y in 0..(p1_board.len() - 4) {
@@ -382,6 +381,16 @@ impl event::EventHandler for AppState {
         graphics::present(ctx)?;
 
         Ok(())
+    }
+
+    fn key_down_event(
+        &mut self,
+        ctx: &mut Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        self.game_state.key_down(keycode);
     }
 }
 /// Generates the meshes for the tetromino block
