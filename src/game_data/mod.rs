@@ -43,7 +43,7 @@ struct GameData {}
 
 impl GameData {}
 
-struct Player {
+pub struct Player {
     board: [[u32; COLS]; ROWS],
     incoming: Vec<(u8, u8)>,
     current_piece: Piece,
@@ -54,7 +54,7 @@ struct Player {
 }
 
 impl Player {
-    fn new() -> Player {
+    pub fn new() -> Player {
         Player {
             board: [[0; COLS]; ROWS],
             incoming: Vec::new(),
