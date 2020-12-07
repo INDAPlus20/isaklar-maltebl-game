@@ -1,14 +1,15 @@
 use crate::game_data::Player;
 
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
+use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect, Font, Text, Scale};
 use ggez::nalgebra::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
+use graphics::TextFragment;
 
 /// size of the window
 pub const SCREEN_SIZE: (f32, f32) = (800.0, 600.0);
 
-/// A tetris board is 10x20 blocks
+/// Visible size of the tetris board
 pub const GRID_SIZE: (i32, i32) = (10, 20);
 const GRID_LINE_WIDTH: f32 = 1.0;
 
@@ -19,8 +20,8 @@ pub const BLOCK_SIZE: (f32, f32) = (20.0, 20.0);
 const SMALL_BLOCK_SIZE: (f32, f32) = (BLOCK_SIZE.0 * 0.5, BLOCK_SIZE.1 * 0.5);
 
 /// The top-left corner of the boards
-pub const P1_BOARD_PLACEMENT: (f32, f32) = (50.0, 50.0);
-pub const P2_BOARD_PLACEMENT: (f32, f32) = (SCREEN_SIZE.0 / 2.0 + 50.0, 50.0);
+pub const P1_BOARD_PLACEMENT: (f32, f32) = (100.0, 100.0);
+pub const P2_BOARD_PLACEMENT: (f32, f32) = (SCREEN_SIZE.0 / 2.0 + 100.0, 100.0);
 
 /// The x y w h of the boards
 pub const P1_BOARD: (f32, f32, f32, f32) = (
@@ -44,6 +45,11 @@ const INFO_BOX_MARGIN: (f32, f32) = (SMALL_BLOCK_SIZE.0, SMALL_BLOCK_SIZE.1);
 // size of the attack meter increments
 const ATTACK_METER: (f32, f32) = (BLOCK_SIZE.0 / 2.0, BLOCK_SIZE.1);
 
+// the center of the score text 
+const P1_SCORE_PLACEMENT: (f32, f32) = (P1_BOARD.0 + P1_BOARD.2/2.0, P1_BOARD.1 + P1_BOARD.3 + 30.0);
+const P2_SCORE_PLACEMENT: (f32, f32) = (P2_BOARD.0 + P2_BOARD.2/2.0, P2_BOARD.1 + P2_BOARD.3 + 30.0);
+
+
 const BACKGROUND_COLOR: Color = Color::new(25.0 / 255.0, 172.0 / 255.0, 244.0 / 255.0, 1.0);
 const BOARD_BACKGROUND: Color = Color::new(0.0, 0.0, 0.0, 0.8);
 const GRID_COLOR: Color = Color::new(100.0 / 255.0, 100.0 / 255.0, 100.0 / 255.0, 1.0);
@@ -65,6 +71,7 @@ pub struct AppState {
     block_palatte: [Mesh; 8],
     grid_mesh: Mesh,
     small_block_palatte: [Mesh; 8],
+    font: Font
 }
 
 impl AppState {
@@ -75,6 +82,7 @@ impl AppState {
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
             small_block_palatte: generate_small_blocks(ctx),
+            font: Font::new(ctx, "/Roboto-Regular.ttf").expect("font loading error")
         };
 
         state
@@ -119,7 +127,7 @@ impl event::EventHandler for AppState {
         )?;
 
         // draw next piece boxes
-        let rectangle = Mesh::new_rectangle(
+        let info_box = Mesh::new_rectangle(
             ctx,
             DrawMode::fill(),
             Rect::new_i32(0, 0, INFO_BOX.0 as i32, INFO_BOX.1 as i32),
@@ -128,7 +136,7 @@ impl event::EventHandler for AppState {
 
         graphics::draw(
             ctx,
-            &rectangle,
+            &info_box,
             (ggez::mint::Point2 {
                 x: P1_BOARD.0 + P1_BOARD.2,
                 y: P1_BOARD.1,
@@ -137,9 +145,28 @@ impl event::EventHandler for AppState {
 
         graphics::draw(
             ctx,
-            &rectangle,
+            &info_box,
             (ggez::mint::Point2 {
                 x: P2_BOARD.0 + P2_BOARD.2,
+                y: P2_BOARD.1,
+            },),
+        )?;
+
+        // draw saved piece boxes
+        graphics::draw(
+            ctx,
+            &info_box,
+            (ggez::mint::Point2 {
+                x: P1_BOARD.0 - INFO_BOX.0,
+                y: P1_BOARD.1,
+            },),
+        )?;
+
+        graphics::draw(
+            ctx,
+            &info_box,
+            (ggez::mint::Point2 {
+                x: P2_BOARD.0 - INFO_BOX.0,
                 y: P2_BOARD.1,
             },),
         )?;
@@ -176,6 +203,46 @@ impl event::EventHandler for AppState {
                             x: x as f32 * SMALL_BLOCK_SIZE.0
                                 + P2_BOARD.0
                                 + P2_BOARD.2
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P2_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
+
+        // draw saved pieces
+        let p1_saved_piece: [[u32; 4]; 4] = [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
+        let p2_saved_piece: [[u32; 4]; 4] = [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
+
+        for y in 0..p1_saved_piece.len() {
+            for x in 0..p1_saved_piece[y].len() {
+                if p1_saved_piece[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.small_block_palatte[p1_saved_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P1_BOARD.0
+                                - INFO_BOX.0
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P1_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
+
+        for y in 0..p2_saved_piece.len() {
+            for x in 0..p2_saved_piece[y].len() {
+                if p2_saved_piece[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.small_block_palatte[p2_saved_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P2_BOARD.0
+                                - INFO_BOX.0
                                 + INFO_BOX_MARGIN.0,
                             y: y as f32 * SMALL_BLOCK_SIZE.1 + P2_BOARD.1 + INFO_BOX_MARGIN.1,
                         },),
@@ -278,6 +345,34 @@ impl event::EventHandler for AppState {
                 y: P2_BOARD.1,
             },),
         )?;
+
+        // draw text 
+        let p1_score = TextFragment::new("2600").font(self.font).scale(Scale{x: 25.0, y: 25.0});
+        let p1_score_text = Text::new(p1_score);
+        let p1_dimensions = p1_score_text.dimensions(ctx);
+        let p2_score = TextFragment::new("2600").font(self.font).scale(Scale{x: 25.0, y: 25.0});
+        let p2_score_text = Text::new(p2_score);
+        let p2_dimensions = p1_score_text.dimensions(ctx);
+        
+        graphics::draw(
+            ctx,
+            &p1_score_text,
+            (ggez::mint::Point2 {
+                x: P1_SCORE_PLACEMENT.0 - (p1_dimensions.0 as f32)/2.0,
+                y: P1_SCORE_PLACEMENT.1 - (p1_dimensions.1 as f32)/2.0,
+            },),
+        )?;
+
+        graphics::draw(
+            ctx,
+            &p2_score_text,
+            (ggez::mint::Point2 {
+                x: P2_SCORE_PLACEMENT.0 - (p2_dimensions.0 as f32)/2.0,
+                y: P2_SCORE_PLACEMENT.1 - (p2_dimensions.1 as f32)/2.0,
+            },),
+        )?;
+
+
 
         // present the graphics to the graphics engine
         graphics::present(ctx)?;
@@ -453,10 +548,13 @@ mod tests {
     use ggez::event::{self, EventHandler};
     use ggez::graphics;
     use ggez::{Context, ContextBuilder, GameResult};
+    use std::path;
 
     #[test]
     fn window_test() {
+        let resource_dir = path::PathBuf::from("./resources");
         let context_builder = ggez::ContextBuilder::new("tetris", "malte och isak")
+            .add_resource_path(resource_dir)
             .window_setup(ggez::conf::WindowSetup::default().title("Test goes brrr"))
             .window_mode(
                 ggez::conf::WindowMode::default()
