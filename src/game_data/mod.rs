@@ -20,23 +20,23 @@ type Point = [i32; 2];
 type Shape = [Point; 4];
 
 pub const ROWS: usize = 24;
-pub const COLS: usize = 24;
+pub const COLS: usize = 10;
 
 pub const SHAPES: [Shape; 7] = [
+    //I
+    [[-2, 0], [-1, 0], [0, 0], [1, 0]],
     //O
     [[-1, 0], [-1, -1], [0, -1], [0, 0]],
     //T
     [[-1, 0], [0, 0], [0, -1], [1, 0]],
-    //L
-    [[-1, 0], [0, 0], [1, 0], [1, -1]],
-    //J
-    [[-1, -1], [-1, 0], [0, 0], [1, 0]],
-    //I
-    [[-2, 0], [-1, 0], [0, 0], [1, 0]],
     //S
     [[-1, 0], [0, 0], [0, -1], [1, -1]],
     //Z
     [[-1, -1], [0, -1], [0, 0], [1, 0]],
+    //J
+    [[-1, -1], [-1, 0], [0, 0], [1, 0]],
+    //L
+    [[-1, 0], [0, 0], [1, 0], [1, -1]],
 ];
 
 struct GameData {}
@@ -69,7 +69,6 @@ impl Player {
     pub fn time_tick(&mut self) {
         if !self.lost {
             self.process_attacks();
-            self.adjust_current();
         }
     }
 
@@ -98,10 +97,9 @@ impl Player {
             if r >= ROWS {
                 break;
             }
-            if full_rows.contains(&r) {
-                r += 1;
+            if !full_rows.contains(&r) {
+                *row = self.board[r];
             }
-            *row = self.board[r];
             r += 1;
         }
         self.board = board;
@@ -189,11 +187,22 @@ impl Player {
         Err("Error placing piece on board!".to_string())
     }
 
+    fn move_current(&mut self, x: i32, y: i32) {
+        let old_shape = self.current_piece.shape;
+        self.current_piece.mov(x, y);
+        if !self.valid_pos(&self.current_piece) {
+            self.adjust_current();
+        }
+    }
+
     fn rotate_current(&mut self, clockwise: bool) {
         let old_shape = self.current_piece.shape;
         self.current_piece.rotate(clockwise);
         if !self.valid_pos(&self.current_piece) {
-            self.current_piece.shape = old_shape;
+            self.adjust_current();
+            if !self.valid_pos(&self.current_piece) {
+                self.current_piece.shape = old_shape;
+            }
         }
     }
 
@@ -215,12 +224,18 @@ impl Player {
         let mut y_adj = 0;
         let mut x_adj = 0;
         for [x, y] in &self.current_piece.pos_on_board() {
-            if (*x < x_adj && *x < 0) || (*x > x_adj && *x > COLS as i32) {
-                x_adj = *x;
+            if *y < -y_adj && *y < 0 {
+                y_adj = -*y;
+            } else if (ROWS as i32 - 1 - *y) < y_adj {
+                y_adj = ROWS as i32 - 1 - *y;
             }
-
+            if *x < -x_adj && *x < 0 {
+                x_adj = -*x;
+            } else if (COLS as i32 - 1 - *x) < x_adj {
+                x_adj = COLS as i32 - 1 - *x;
+            }
             loop {
-                if self.board[*y as usize + y_adj][*x as usize] != 0 {
+                if self.board[(*y + y_adj) as usize][(*x + x_adj) as usize] != 0 {
                     y_adj += 1;
                 } else {
                     break;
@@ -271,7 +286,7 @@ impl Piece {
     }
 
     fn rotate(&mut self, clockwise: bool) {
-        if self.shape != SHAPES[0] {
+        if self.shape != SHAPES[1] {
             for block in &mut self.shape {
                 block.swap(0, 1);
                 if clockwise {

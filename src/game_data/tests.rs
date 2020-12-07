@@ -1,5 +1,4 @@
-use super::{Color, Piece, Player, ROWS, SHAPES};
-use std::io;
+use super::{Color, Piece, Player, COLS, ROWS, SHAPES};
 use std::thread;
 
 #[test]
@@ -27,10 +26,12 @@ fn rotation() {
     );
 }
 
-#[test] //not real test!
-fn console_debug() {
+#[test]
+fn line_clear() {
     let mut player = Player::new();
-    loop {
+    for i in 0..COLS {
+        player.current_piece = Piece::new(SHAPES[0], Color::Color1, [i as i32, 1]);
+        player.rotate_current(true);
         let mut loop_var = 0;
         println!("-------------------------------------------");
         for line in &player.get_board() {
@@ -40,6 +41,7 @@ fn console_debug() {
             }
             print!("|");
             for point in line {
+                print!(" ");
                 if *point == 0 {
                     print!(" ");
                 } else {
@@ -49,13 +51,69 @@ fn console_debug() {
             println!("|");
         }
         println!("-------------------------------------------");
-        thread::sleep_ms(100);
-        player.rotate_current(true);
         player.move_tick();
+    }
+    let mut is_cleared = true;
+    for line in &player.board {
+        for block in line {
+            if block != &0 {
+                is_cleared = false;
+            }
+        }
+    }
+    let mut loop_var = 0;
+    println!("-------------------------------------------");
+    for line in &player.board {
+        loop_var += 1;
+        if loop_var > (ROWS - 4) {
+            break;
+        }
+        print!("|");
+        for point in line {
+            print!(" ");
+            if *point == 0 {
+                print!(" ");
+            } else {
+                print!("*");
+            }
+        }
+        println!("|");
+    }
+    println!("-------------------------------------------");
+    assert!(is_cleared);
+    //print!("{}[2J", 27 as char);
+}
+
+#[test] //not real test!
+fn console_debug() {
+    let mut player = Player::new();
+    loop {
+        print!("{}[2J", 27 as char);
+        let mut loop_var = 0;
+        println!("-------------------------------------------");
+        for line in &player.get_board() {
+            loop_var += 1;
+            if loop_var > (ROWS - 4) {
+                break;
+            }
+            print!("|");
+            for point in line {
+                print!(" ");
+                if *point == 0 {
+                    print!(" ");
+                } else {
+                    print!("*");
+                }
+            }
+            println!("|");
+        }
+        println!("-------------------------------------------");
         if player.lost {
             break;
         }
-        print!("{}[2J", 27 as char);
+        thread::sleep_ms(100);
+        player.rotate_current(true);
+        player.move_tick();
     }
     println!("game lost!");
     assert_eq!(true, player.lost);
