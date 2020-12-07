@@ -7,6 +7,10 @@ pub struct Game {
 impl Game {
     pub fn new() -> Game {
         Game {
+            players: [Player::new(), Player::new()],
+        }
+    }
+
     pub fn update(&mut self) {
         // update game tick for players
         for p in 0..self.players.len() {
@@ -18,6 +22,19 @@ impl Game {
     pub fn get_boards(&mut self) -> [[[u32; COLS]; ROWS]; 2] {
         [self.players[0].get_board(), self.players[1].get_board()]
     }
+
+    // pub fn get_next_pieces(&mut self) -> [[[u32; 4]; 4];2] {
+
+    // }
+
+    // pub fn get_saved_pieces(&mut self) -> [[[u32; 4]; 4];2] {
+
+    // }
+
+    // pub fn get_scores(&mut self) -> [u32; 2] {
+
+    // }
+
     pub fn key_down(&mut self, key: KeyCode) {
         match key {
             // P1 controlls
