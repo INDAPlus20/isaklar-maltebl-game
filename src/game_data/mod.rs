@@ -39,10 +39,6 @@ pub const SHAPES: [Shape; 7] = [
     [[-1, 0], [0, 0], [1, 0], [1, -1]],
 ];
 
-struct GameData {}
-
-impl GameData {}
-
 pub struct Player {
     board: [[u32; COLS]; ROWS],
     incoming: Vec<(u8, u8)>,
@@ -140,7 +136,7 @@ impl Player {
         }
     }
 
-    fn save_piece(&mut self) {
+    pub fn save_piece(&mut self) {
         if let Some(piece) = &mut self.saved_piece {
             let p = piece.clone();
             *piece = self.current_piece.clone();
@@ -175,19 +171,22 @@ impl Player {
             &self.current_piece
         };
         if self.valid_pos(&piece) {
+            let mut lost = false;
             for [x, y] in &piece.pos_on_board() {
-                if *y >= (ROWS as i32 - 4) {
-                    self.lose_game();
-                    return Ok(());
-                }
                 self.board[*y as usize][*x as usize] = piece.color as u32;
+                if *y >= (ROWS as i32 - 4) {
+                    lost = true;
+                }
+            }
+            if lost {
+                self.lose_game();
             }
             return Ok(());
         }
         Err("Error placing piece on board!".to_string())
     }
 
-    fn move_current(&mut self, x: i32, y: i32) {
+    pub fn move_current(&mut self, x: i32, y: i32) {
         let old_shape = self.current_piece.shape;
         self.current_piece.mov(x, y);
         if !self.valid_pos(&self.current_piece) {
@@ -195,7 +194,7 @@ impl Player {
         }
     }
 
-    fn rotate_current(&mut self, clockwise: bool) {
+    pub fn rotate_current(&mut self, clockwise: bool) {
         let old_shape = self.current_piece.shape;
         self.current_piece.rotate(clockwise);
         if !self.valid_pos(&self.current_piece) {

@@ -92,6 +92,10 @@ impl AppState {
 impl event::EventHandler for AppState {
     // update the game logic
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        for player in &mut self.players {
+            player.rotate_current(true);
+            player.move_tick();
+        }
         Ok(())
     }
 
