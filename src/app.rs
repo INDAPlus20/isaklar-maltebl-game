@@ -1,3 +1,5 @@
+use crate::game_data::Player;
+
 use ggez::event::{self, EventHandler};
 use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
 use ggez::nalgebra::Point2;
@@ -13,7 +15,10 @@ const GRID_LINE_WIDTH: f32 = 1.0;
 /// Size of each block
 pub const BLOCK_SIZE: (f32, f32) = (20.0, 20.0);
 
-// The top-left corner of the boards
+/// Size of the scaled-down blocks
+const SMALL_BLOCK_SIZE: (f32, f32) = (BLOCK_SIZE.0 * 0.5, BLOCK_SIZE.1 * 0.5);
+
+/// The top-left corner of the boards
 pub const P1_BOARD_PLACEMENT: (f32, f32) = (50.0, 50.0);
 pub const P2_BOARD_PLACEMENT: (f32, f32) = (SCREEN_SIZE.0 / 2.0 + 50.0, 50.0);
 
@@ -24,12 +29,20 @@ pub const P1_BOARD: (f32, f32, f32, f32) = (
     (GRID_SIZE.0 as f32) * BLOCK_SIZE.0, // width
     (GRID_SIZE.1 as f32) * BLOCK_SIZE.0, // height
 );
+/// The x y w h of the boards
 pub const P2_BOARD: (f32, f32, f32, f32) = (
     P2_BOARD_PLACEMENT.0,                // x
     P2_BOARD_PLACEMENT.1,                // y
     (GRID_SIZE.0 as f32) * BLOCK_SIZE.0, // width
     (GRID_SIZE.1 as f32) * BLOCK_SIZE.0, // height
 );
+
+// for the next piece and saved piece boxes
+const INFO_BOX: (f32, f32) = (SMALL_BLOCK_SIZE.0 * 6.0, SMALL_BLOCK_SIZE.1 * 6.0);
+const INFO_BOX_MARGIN: (f32, f32) = (SMALL_BLOCK_SIZE.0, SMALL_BLOCK_SIZE.1);
+
+// size of the attack meter increments
+const ATTACK_METER: (f32, f32) = (BLOCK_SIZE.0 / 2.0, BLOCK_SIZE.1);
 
 const BACKGROUND_COLOR: Color = Color::new(25.0 / 255.0, 172.0 / 255.0, 244.0 / 255.0, 1.0);
 const BOARD_BACKGROUND: Color = Color::new(0.0, 0.0, 0.0, 0.8);
@@ -48,84 +61,20 @@ pub const PALETTE: [Color; 8] = [
 
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
 pub struct AppState {
-    p1_board: [[u32; 24]; 10],
-    p2_board: [[u32; 24]; 10],
+    players: [Player; 2],
     block_palatte: [Mesh; 8],
     grid_mesh: Mesh,
+    small_block_palatte: [Mesh; 8],
 }
 
 impl AppState {
     pub fn new(ctx: &mut Context) -> AppState {
         let state = AppState {
             // Load/create resources here: images, fonts, sounds, etc.
-            p1_board: [
-                // PLACEHOLDER
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-            ],
-            p2_board: [
-                // PLACEHOLDER
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                [
-                    3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-            ],
+            players: [Player::new(), Player::new()],
             block_palatte: generate_blocks(ctx),
             grid_mesh: generate_grid_mesh(ctx).expect("grid mesh err"),
+            small_block_palatte: generate_small_blocks(ctx),
         };
 
         state
@@ -169,13 +118,82 @@ impl event::EventHandler for AppState {
             },),
         )?;
 
-        // draw blocks
-        for x in 0..self.p1_board.len() {
-            for y in 0..(self.p1_board[x].len() - 4) {
-                if self.p1_board[x][y] > 0 {
+        // draw next piece boxes
+        let rectangle = Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, INFO_BOX.0 as i32, INFO_BOX.1 as i32),
+            BOARD_BACKGROUND,
+        )?;
+
+        graphics::draw(
+            ctx,
+            &rectangle,
+            (ggez::mint::Point2 {
+                x: P1_BOARD.0 + P1_BOARD.2,
+                y: P1_BOARD.1,
+            },),
+        )?;
+
+        graphics::draw(
+            ctx,
+            &rectangle,
+            (ggez::mint::Point2 {
+                x: P2_BOARD.0 + P2_BOARD.2,
+                y: P2_BOARD.1,
+            },),
+        )?;
+
+        // draw next pieces
+        let p1_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+        let p2_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+
+        for y in 0..p1_next_piece.len() {
+            for x in 0..p1_next_piece[y].len() {
+                if p1_next_piece[y][x] > 0 {
                     graphics::draw(
                         ctx,
-                        &self.block_palatte[self.p1_board[x][y] as usize - 1],
+                        &self.small_block_palatte[p1_next_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P1_BOARD.0
+                                + P1_BOARD.2
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P1_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
+
+        for y in 0..p2_next_piece.len() {
+            for x in 0..p2_next_piece[y].len() {
+                if p2_next_piece[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.small_block_palatte[p2_next_piece[y][x] as usize - 1],
+                        (ggez::mint::Point2 {
+                            x: x as f32 * SMALL_BLOCK_SIZE.0
+                                + P2_BOARD.0
+                                + P2_BOARD.2
+                                + INFO_BOX_MARGIN.0,
+                            y: y as f32 * SMALL_BLOCK_SIZE.1 + P2_BOARD.1 + INFO_BOX_MARGIN.1,
+                        },),
+                    )?
+                }
+            }
+        }
+
+        let p1_board = self.players[0].get_board();
+        let p2_board = self.players[1].get_board();
+
+        // draw blocks
+        for y in 0..(p1_board.len() - 4) {
+            for x in 0..p1_board[y].len() {
+                if p1_board[y][x] > 0 {
+                    graphics::draw(
+                        ctx,
+                        &self.block_palatte[p1_board[y][x] as usize - 1],
                         (ggez::mint::Point2 {
                             x: P1_BOARD.0 + (x as f32) * BLOCK_SIZE.0,
                             y: P1_BOARD.1 + P1_BOARD.3 - ((y as f32) + 1.0) * BLOCK_SIZE.1,
@@ -186,12 +204,12 @@ impl event::EventHandler for AppState {
             }
         }
 
-        for x in 0..self.p2_board.len() {
-            for y in 0..self.p2_board[x].len() {
-                if self.p2_board[x][y] > 0 {
+        for y in 0..(p2_board.len() - 4) {
+            for x in 0..p2_board[y].len() {
+                if p2_board[y][x] > 0 {
                     graphics::draw(
                         ctx,
-                        &self.block_palatte[self.p2_board[x][y] as usize - 1],
+                        &self.block_palatte[p2_board[y][x] as usize - 1],
                         (ggez::mint::Point2 {
                             x: P2_BOARD.0 + (x as f32) * BLOCK_SIZE.0,
                             y: P2_BOARD.1 + P2_BOARD.3 - ((y as f32) + 1.0) * BLOCK_SIZE.1,
@@ -199,6 +217,47 @@ impl event::EventHandler for AppState {
                     )
                     .expect("msg");
                 }
+            }
+        }
+
+        // draw attack meters
+        let p1_meter: Vec<(u8, u8)> = vec![(2, 1), (3, 6)];
+        let p2_meter: Vec<(u8, u8)> = vec![(6, 1), (1, 6)];
+
+        let rectangle = Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, ATTACK_METER.0 as i32, ATTACK_METER.1 as i32),
+            PALETTE[7],
+        )?;
+
+        let mut i = 1;
+        for attack in p1_meter {
+            for _l in 0..attack.0 {
+                graphics::draw(
+                    ctx,
+                    &rectangle,
+                    (ggez::mint::Point2 {
+                        x: P1_BOARD.0 - ATTACK_METER.0,
+                        y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
+                    },),
+                )?;
+                i += 1;
+            }
+        }
+
+        let mut i = 1;
+        for attack in p2_meter {
+            for _l in 0..attack.0 {
+                graphics::draw(
+                    ctx,
+                    &rectangle,
+                    (ggez::mint::Point2 {
+                        x: P2_BOARD.0 - ATTACK_METER.0,
+                        y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
+                    },),
+                )?;
+                i += 1;
             }
         }
 
@@ -219,12 +278,14 @@ impl event::EventHandler for AppState {
                 y: P2_BOARD.1,
             },),
         )?;
+
+        // present the graphics to the graphics engine
         graphics::present(ctx)?;
 
         Ok(())
     }
 }
-
+/// Generates the meshes for the tetromino block
 fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
     [
         Mesh::new_rectangle(
@@ -285,462 +346,108 @@ fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
         .expect("Failed creating blocks"),
     ]
 }
-
+/// generates the mesh for the grid-lines
 fn generate_grid_mesh(ctx: &mut Context) -> GameResult<Mesh> {
-    MeshBuilder::new()
-        // Vertical lines
-        .line(
+    let mut mesh = MeshBuilder::new();
+    for x in 0..(GRID_SIZE.0 + 1) {
+        mesh.line(
             &[
                 ggez::mint::Point2 {
-                    x: 0.0 * BLOCK_SIZE.0,
+                    x: (x as f32) * BLOCK_SIZE.0,
                     y: 0.0,
                 },
                 ggez::mint::Point2 {
-                    x: 0.0 * BLOCK_SIZE.0,
+                    x: (x as f32) * BLOCK_SIZE.0,
                     y: P1_BOARD.3,
                 },
             ],
             GRID_LINE_WIDTH,
             GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 1.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 1.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 2.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 2.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 3.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 3.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 4.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 4.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 5.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 5.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 6.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 6.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 7.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 7.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 8.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 8.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 9.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 9.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 10.0 * BLOCK_SIZE.0,
-                    y: 0.0,
-                },
-                ggez::mint::Point2 {
-                    x: 10.0 * BLOCK_SIZE.0,
-                    y: P1_BOARD.3,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        // Horisontal lines
-        .line(
+        )
+        .expect("msg");
+    }
+    for y in 0..(GRID_SIZE.1 + 1) {
+        mesh.line(
             &[
                 ggez::mint::Point2 {
                     x: 0.0,
-                    y: 0.0 * BLOCK_SIZE.1,
+                    y: (y as f32) * BLOCK_SIZE.1,
                 },
                 ggez::mint::Point2 {
                     x: P1_BOARD.2,
-                    y: 0.0 * BLOCK_SIZE.1,
+                    y: (y as f32) * BLOCK_SIZE.1,
                 },
             ],
             GRID_LINE_WIDTH,
             GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 1.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 1.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 2.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 2.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 3.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 3.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 4.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 4.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 5.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 5.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 6.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 6.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 7.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 7.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 8.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 8.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 9.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 9.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 10.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 10.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 11.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 11.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 12.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 12.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 13.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 13.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 14.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 14.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 15.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 15.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 16.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 16.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 17.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 17.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 18.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 18.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 19.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 19.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .line(
-            &[
-                ggez::mint::Point2 {
-                    x: 0.0,
-                    y: 20.0 * BLOCK_SIZE.1,
-                },
-                ggez::mint::Point2 {
-                    x: P1_BOARD.2,
-                    y: 20.0 * BLOCK_SIZE.1,
-                },
-            ],
-            GRID_LINE_WIDTH,
-            GRID_COLOR,
-        )?
-        .build(ctx)
+        )
+        .expect("msg");
+    }
+
+    mesh.build(ctx)
 }
 
+/// generates the meshes for the scaled-down tetromino for next_piece and saved_piece
+fn generate_small_blocks(ctx: &mut Context) -> [Mesh; 8] {
+    [
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[0],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[1],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[2],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[3],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[4],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[5],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[6],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, SMALL_BLOCK_SIZE.0 as i32, SMALL_BLOCK_SIZE.1 as i32),
+            PALETTE[7],
+        )
+        .expect("Failed creating blocks"),
+    ]
+}
 mod tests {
     use super::{AppState, SCREEN_SIZE};
     use ggez::event::{self, EventHandler};

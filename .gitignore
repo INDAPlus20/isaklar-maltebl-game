@@ -4,3 +4,4 @@ Cargo.lock
 /*/target/
 /*/*/target/
 **/*.rs.bk
+.vscode/settings.json
