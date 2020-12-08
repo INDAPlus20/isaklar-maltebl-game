@@ -4,7 +4,7 @@ use std::thread;
 #[test]
 fn rotation() {
     let mut player = Player::new();
-    player.current_piece = Piece::new(SHAPES[1], Color::Color1, [2, 2]);
+    player.current_piece = Piece::new(SHAPES[2], Color::Color1, [2, 2]);
     assert_eq!(
         [[1, 2], [2, 2], [2, 1], [3, 2]],
         player.current_piece.pos_on_board()

@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::time::Instant;
 
 #[cfg(test)]
 mod tests;
@@ -6,18 +7,20 @@ mod tests;
 #[derive(Copy, Clone)]
 enum Color {
     Void = 0,
-    Fixed = 1,
-    Color1 = 2,
-    Color2 = 3,
-    Color3 = 4,
-    Color4 = 5,
-    Color5 = 6,
-    Color6 = 7,
-    Color7 = 8,
+    Color1 = 1,
+    Color2 = 2,
+    Color3 = 3,
+    Color4 = 4,
+    Color5 = 5,
+    Color6 = 6,
+    Color7 = 7,
+    Fixed = 8,
 }
 
 type Point = [i32; 2];
 type Shape = [Point; 4];
+
+pub const ATTACK_DELAY: u8 = 6; //Osäker på denna. nu processeras även attacks med move_tick.
 
 pub const ROWS: usize = 24;
 pub const COLS: usize = 10;
@@ -39,14 +42,22 @@ pub const SHAPES: [Shape; 7] = [
     [[-1, 0], [0, 0], [1, 0], [1, -1]],
 ];
 
+pub const TIME_LEVELS: [f64; 20] = [
+    1.0, 0.79300, 0.61780, 0.47273, 0.35520, 0.26200, 0.18968, 0.13473, 0.09388, 0.06415, 0.04298,
+    0.02822, 0.01815, 0.01144, 0.00706, 0.00426, 0.00252, 0.00146, 0.00082, 0.00046,
+];
+
 pub struct Player {
     board: [[u32; COLS]; ROWS],
     incoming: Vec<(u8, u8)>,
+    outgoing: Option<(u8, u8)>,
     current_piece: Piece,
     saved_piece: Option<Piece>,
     next_piece: Piece,
-    score: u32,
+    score: usize,
     lost: bool,
+    gravity: f64,
+    update_timer: Instant,
 }
 
 impl Player {
@@ -54,17 +65,22 @@ impl Player {
         Player {
             board: [[0; COLS]; ROWS],
             incoming: Vec::new(),
+            outgoing: None,
             current_piece: Piece::random_piece(),
             saved_piece: None,
             next_piece: Piece::random_piece(),
             score: 0,
             lost: false,
+            gravity: TIME_LEVELS[0],
+            update_timer: Instant::now(),
         }
     }
 
-    pub fn time_tick(&mut self) {
-        if !self.lost {
+    pub fn update(&mut self) {
+        if !self.lost && self.update_timer.elapsed().as_secs_f64() >= self.gravity {
             self.process_attacks();
+            self.move_tick();
+            self.update_timer = Instant::now();
         }
     }
 
@@ -87,18 +103,19 @@ impl Player {
                 full_rows.push(i);
             }
         }
-        let mut r = 0;
-        let mut board = [[0; COLS]; ROWS];
-        for row in &mut board {
-            if r >= ROWS {
-                break;
+        if !full_rows.is_empty() {
+            let mut board = [[0; COLS]; ROWS];
+            for (r, row) in board.iter_mut().enumerate() {
+                if r >= ROWS {
+                    break;
+                }
+                if !full_rows.contains(&r) {
+                    *row = self.board[r];
+                }
             }
-            if !full_rows.contains(&r) {
-                *row = self.board[r];
-            }
-            r += 1;
+            self.process_score(full_rows.len());
+            self.board = board;
         }
-        self.board = board;
     }
 
     fn process_attacks(&mut self) {
@@ -152,6 +169,21 @@ impl Player {
         self.next_piece = Piece::random_piece();
     }
 
+    fn process_score(&mut self, lines_cleared: usize) {
+        let (mut score, mut attack) = (0, 0);
+        if lines_cleared >= 4 {
+            score = 8;
+            attack = 4;
+        } else {
+            score = lines_cleared * 2 - 1;
+            attack = lines_cleared as u8 - 1;
+        };
+        self.score += score;
+        let level = self.score / 5;
+        self.gravity = TIME_LEVELS[level];
+        self.outgoing = Some((attack, ATTACK_DELAY));
+    }
+
     fn lose_game(&mut self) {
         self.lost = true;
     }
@@ -159,7 +191,10 @@ impl Player {
     pub fn get_board(&self) -> [[u32; COLS]; ROWS] {
         let mut board = self.board;
         for [x, y] in &self.current_piece.pos_on_board() {
-            board[*y as usize][*x as usize] = self.current_piece.color as u32;
+            let (x, y) = (*x as usize, *y as usize);
+            if x < COLS && y < ROWS {
+                board[y][x] = self.current_piece.color as u32;
+            }
         }
         board
     }
@@ -234,7 +269,9 @@ impl Player {
                 x_adj = COLS as i32 - 1 - *x;
             }
             loop {
-                if self.board[(*y + y_adj) as usize][(*x + x_adj) as usize] != 0 {
+                if (*y + y_adj) < ROWS as i32                                           //UNSURE IF THIS IS A GOOD BUGFIX!
+                    && self.board[(*y + y_adj) as usize][(*x + x_adj) as usize] != 0
+                {
                     y_adj += 1;
                 } else {
                     break;
@@ -267,12 +304,12 @@ impl Piece {
         Piece {
             shape: SHAPES[rng],
             color: match rng {
-                1 => Color::Color1,
-                2 => Color::Color2,
-                3 => Color::Color3,
-                4 => Color::Color4,
-                5 => Color::Color5,
-                6 => Color::Color6,
+                0 => Color::Color1,
+                1 => Color::Color2,
+                2 => Color::Color3,
+                3 => Color::Color4,
+                4 => Color::Color5,
+                5 => Color::Color6,
                 _ => Color::Color7,
             },
             position: [COLS as i32 / 2, ROWS as i32 - 1],
