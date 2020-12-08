@@ -179,8 +179,9 @@ impl event::EventHandler for AppState {
         )?;
 
         // draw next pieces
-        let p1_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
-        let p2_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+        let next_pieces = self.game_state.get_next_pieces();
+        let p1_next_piece: [[u32; 4]; 4] = next_pieces[0];
+        let p2_next_piece: [[u32; 4]; 4] = next_pieces[1];
 
         for y in 0..p1_next_piece.len() {
             for x in 0..p1_next_piece[y].len() {
@@ -219,10 +220,9 @@ impl event::EventHandler for AppState {
         }
 
         // draw saved pieces
-        let p1_saved_piece: [[u32; 4]; 4] =
-            [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
-        let p2_saved_piece: [[u32; 4]; 4] =
-            [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
+        let saved_pieces = self.game_state.get_saved_pieces();
+        let p1_saved_piece: [[u32; 4]; 4] = saved_pieces[0];
+        let p2_saved_piece: [[u32; 4]; 4] = saved_pieces[1];
 
         for y in 0..p1_saved_piece.len() {
             for x in 0..p1_saved_piece[y].len() {
@@ -293,8 +293,9 @@ impl event::EventHandler for AppState {
         }
 
         // draw attack meters
-        let p1_meter: Vec<(u8, u8)> = vec![(2, 1), (3, 6)];
-        let p2_meter: Vec<(u8, u8)> = vec![(6, 1), (1, 6)];
+        let attacks = self.game_state.get_attackbars();
+        let p1_meter = attacks[0];
+        let p2_meter = attacks[1];
 
         let rectangle = Mesh::new_rectangle(
             ctx,
@@ -303,33 +304,33 @@ impl event::EventHandler for AppState {
             PALETTE[7],
         )?;
 
-        let mut i = 1;
-        for attack in p1_meter {
-            for _l in 0..attack.0 {
+        let mut a = 1;
+        for i in 0..p1_meter.len() {
+            for _l in 0..p1_meter[i] {
                 graphics::draw(
                     ctx,
                     &rectangle,
                     (ggez::mint::Point2 {
                         x: P1_BOARD.0 - ATTACK_METER.0,
-                        y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
+                        y: P1_BOARD.1 + P1_BOARD.3 - a as f32 * ATTACK_METER.1,
                     },),
                 )?;
-                i += 1;
+                a += 1;
             }
         }
 
-        let mut i = 1;
-        for attack in p2_meter {
-            for _l in 0..attack.0 {
+        let mut a = 1;
+        for i in 0..p2_meter.len() {
+            for _l in 0..p2_meter[i] {
                 graphics::draw(
                     ctx,
                     &rectangle,
                     (ggez::mint::Point2 {
                         x: P2_BOARD.0 - ATTACK_METER.0,
-                        y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
+                        y: P2_BOARD.1 + P2_BOARD.3 - a as f32 * ATTACK_METER.1,
                     },),
                 )?;
-                i += 1;
+                a += 1;
             }
         }
 
@@ -352,12 +353,13 @@ impl event::EventHandler for AppState {
         )?;
 
         // draw text
-        let p1_score = TextFragment::new("2600")
+        let scores = self.game_state.get_scores();
+        let p1_score = TextFragment::new(scores[0].to_string())
             .font(self.font)
             .scale(Scale { x: 25.0, y: 25.0 });
         let p1_score_text = Text::new(p1_score);
         let p1_dimensions = p1_score_text.dimensions(ctx);
-        let p2_score = TextFragment::new("2600")
+        let p2_score = TextFragment::new(scores[1].to_string())
             .font(self.font)
             .scale(Scale { x: 25.0, y: 25.0 });
         let p2_score_text = Text::new(p2_score);
