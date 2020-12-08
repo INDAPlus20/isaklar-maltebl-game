@@ -3,7 +3,7 @@ use std::thread;
 
 #[test]
 fn rotation() {
-    let mut player = Player::new();
+    let mut player = Player::new(0);
     player.current_piece = Piece::new(SHAPES[2], Color::Color1, [2, 2]);
     assert_eq!(
         [[1, 2], [2, 2], [2, 1], [3, 2]],
@@ -28,7 +28,7 @@ fn rotation() {
 
 #[test]
 fn line_clear() {
-    let mut player = Player::new();
+    let mut player = Player::new(0);
     for i in 0..COLS {
         player.current_piece = Piece::new(SHAPES[0], Color::Color1, [i as i32, 1]);
         player.rotate_current(true);
@@ -86,7 +86,7 @@ fn line_clear() {
 
 #[test] //not real test!
 fn console_debug() {
-    let mut player = Player::new();
+    let mut player = Player::new(0);
     loop {
         print!("{}[2J", 27 as char);
         let mut loop_var = 0;

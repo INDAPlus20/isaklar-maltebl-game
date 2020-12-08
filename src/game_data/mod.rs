@@ -5,7 +5,7 @@ use std::time::Instant;
 mod tests;
 
 #[derive(Copy, Clone)]
-enum Color {
+pub enum Color {
     Void = 0,
     Color1 = 1,
     Color2 = 2,
@@ -61,7 +61,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Player {
+    pub fn new(level: usize) -> Player {
         Player {
             board: [[0; COLS]; ROWS],
             incoming: Vec::new(),
@@ -71,7 +71,7 @@ impl Player {
             next_piece: Piece::random_piece(),
             score: 0,
             lost: false,
-            gravity: TIME_LEVELS[0],
+            gravity: TIME_LEVELS[level],
             update_timer: Instant::now(),
         }
     }
@@ -105,13 +105,16 @@ impl Player {
         }
         if !full_rows.is_empty() {
             let mut board = [[0; COLS]; ROWS];
-            for (r, row) in board.iter_mut().enumerate() {
+            let mut r = 0;
+            for row in &mut board {
+                while full_rows.contains(&r) {
+                    r += 1;
+                }
                 if r >= ROWS {
                     break;
                 }
-                if !full_rows.contains(&r) {
-                    *row = self.board[r];
-                }
+                *row = self.board[r];
+                r += 1;
             }
             self.process_score(full_rows.len());
             self.board = board;
@@ -132,7 +135,7 @@ impl Player {
             let rng = rand::thread_rng().gen_range(0, COLS);
             for row in &mut board {
                 if rows > 0 {
-                    *row = [1; COLS];
+                    *row = [Color::Fixed as u32; COLS];
                     row[rng] = 0;
                     rows -= 1;
                 } else {
@@ -197,6 +200,32 @@ impl Player {
             }
         }
         board
+    }
+
+    pub fn get_incoming(&self) -> &Vec<(u8, u8)> {
+        &self.incoming
+    }
+
+    pub fn get_next_piece(&self) -> &Piece {
+        &self.next_piece
+    }
+
+    pub fn get_saved_piece(&self) -> &Option<Piece> {
+        &self.saved_piece
+    }
+
+    pub fn get_score(&self) -> usize {
+        self.score
+    }
+
+    pub fn add_incoming(&mut self, attack: (u8, u8)) {
+        self.incoming.push(attack);
+    }
+
+    pub fn take_outgoing(&mut self) -> Option<(u8, u8)> {
+        let outgoing = self.outgoing;
+        self.outgoing = None;
+        outgoing
     }
 
     fn place_piece(&mut self, alt_piece: Option<&Piece>) -> Result<(), String> {
@@ -284,7 +313,7 @@ impl Player {
 }
 
 #[derive(Clone)]
-struct Piece {
+pub struct Piece {
     shape: Shape,
     color: Color,
     position: Point,
@@ -314,6 +343,18 @@ impl Piece {
             },
             position: [COLS as i32 / 2, ROWS as i32 - 1],
         }
+    }
+
+    pub fn get_shape(&self) -> Shape {
+        self.shape
+    }
+
+    pub fn get_4x4_coloredshape(&self) -> [[u32; 4]; 4] {
+        let mut n_shape = [[0; 4]; 4];
+        for [x, y] in &self.shape {
+            n_shape[(y + 1) as usize][(x + 2) as usize] = self.color as u32;
+        }
+        n_shape
     }
 
     fn mov(&mut self, x: i32, y: i32) {
