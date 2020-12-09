@@ -36,7 +36,7 @@ impl Game {
         let mut next_pieces = [[[0; 4]; 4]; PLAYER_AMOUNT];
         for p in 0..self.players.len() {
             if p < PLAYER_AMOUNT {
-                next_pieces[p] = self.players[p].get_next_piece().get_4x4_coloredshape();
+                next_pieces[p] = self.players[p].get_next_piece().get_display_shape();
             }
         }
         next_pieces
@@ -47,7 +47,7 @@ impl Game {
         for p in 0..self.players.len() {
             if p < PLAYER_AMOUNT {
                 if let Some(piece) = self.players[p].get_saved_piece() {
-                    saved_pieces[p] = piece.get_4x4_coloredshape();
+                    saved_pieces[p] = piece.get_display_shape();
                 }
             }
         }
@@ -85,18 +85,20 @@ impl Game {
         match key {
             // P1 controlls
             KeyCode::A => self.players[0].move_current(-1, 0),
-            KeyCode::W => self.players[0].rotate_current(true),
+            KeyCode::E => self.players[0].rotate_current(true),
             KeyCode::D => self.players[0].move_current(1, 0),
-            KeyCode::S => self.players[0].rotate_current(false),
-            KeyCode::Space => self.players[0].move_current(0, -1),
-            KeyCode::E => self.players[0].save_piece(),
+            KeyCode::Q => self.players[0].rotate_current(false),
+            KeyCode::S => self.players[0].move_current(0, -1),
+            KeyCode::W => self.players[0].drop_current(),
+            KeyCode::Space => self.players[0].save_piece(),
             // P2 controlls
-            KeyCode::Left => self.players[1].move_current(-1, 0),
-            KeyCode::Up => self.players[1].rotate_current(true),
-            KeyCode::Right => self.players[1].move_current(1, 0),
-            KeyCode::Down => self.players[1].rotate_current(false),
-            KeyCode::NumpadEnter => self.players[1].move_current(0, -1),
+            KeyCode::J => self.players[1].move_current(-1, 0),
+            KeyCode::O => self.players[1].rotate_current(true),
+            KeyCode::L => self.players[1].move_current(1, 0),
+            KeyCode::U => self.players[1].rotate_current(false),
+            KeyCode::K => self.players[1].move_current(0, -1),
             KeyCode::RShift => self.players[1].save_piece(),
+            KeyCode::I => self.players[1].drop_current(),
             _ => (),
         }
     }

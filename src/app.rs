@@ -179,8 +179,7 @@ impl event::EventHandler for AppState {
         )?;
 
         // draw next pieces
-        let p1_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
-        let p2_next_piece: [[u32; 4]; 4] = [[0, 0, 0, 0], [3, 3, 0, 0], [0, 3, 3, 0], [0, 0, 0, 0]];
+        let [p1_next_piece, p2_next_piece] = self.game_state.get_next_pieces();
 
         for y in 0..p1_next_piece.len() {
             for x in 0..p1_next_piece[y].len() {
@@ -219,10 +218,7 @@ impl event::EventHandler for AppState {
         }
 
         // draw saved pieces
-        let p1_saved_piece: [[u32; 4]; 4] =
-            [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
-        let p2_saved_piece: [[u32; 4]; 4] =
-            [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
+        let [p1_saved_piece, p2_saved_piece] = self.game_state.get_saved_pieces();
 
         for y in 0..p1_saved_piece.len() {
             for x in 0..p1_saved_piece[y].len() {
@@ -293,8 +289,7 @@ impl event::EventHandler for AppState {
         }
 
         // draw attack meters
-        let p1_meter: Vec<(u8, u8)> = vec![(2, 1), (3, 6)];
-        let p2_meter: Vec<(u8, u8)> = vec![(6, 1), (1, 6)];
+        let [p1_meter, p2_meter] = self.game_state.get_attackbars();
 
         let rectangle = Mesh::new_rectangle(
             ctx,
@@ -304,33 +299,29 @@ impl event::EventHandler for AppState {
         )?;
 
         let mut i = 1;
-        for attack in p1_meter {
-            for _l in 0..attack.0 {
-                graphics::draw(
-                    ctx,
-                    &rectangle,
-                    (ggez::mint::Point2 {
-                        x: P1_BOARD.0 - ATTACK_METER.0,
-                        y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
-                    },),
-                )?;
-                i += 1;
-            }
+        for _l in 0..p1_meter[0] {
+            graphics::draw(
+                ctx,
+                &rectangle,
+                (ggez::mint::Point2 {
+                    x: P1_BOARD.0 - ATTACK_METER.0,
+                    y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
+                },),
+            )?;
+            i += 1;
         }
 
         let mut i = 1;
-        for attack in p2_meter {
-            for _l in 0..attack.0 {
-                graphics::draw(
-                    ctx,
-                    &rectangle,
-                    (ggez::mint::Point2 {
-                        x: P2_BOARD.0 - ATTACK_METER.0,
-                        y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
-                    },),
-                )?;
-                i += 1;
-            }
+        for _l in 0..p2_meter[0] {
+            graphics::draw(
+                ctx,
+                &rectangle,
+                (ggez::mint::Point2 {
+                    x: P2_BOARD.0 - ATTACK_METER.0,
+                    y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
+                },),
+            )?;
+            i += 1;
         }
 
         // draw grids

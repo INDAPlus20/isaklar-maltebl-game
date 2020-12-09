@@ -15,12 +15,14 @@ pub enum Color {
     Color6 = 6,
     Color7 = 7,
     Fixed = 8,
+    Shadow = 9,
 }
 
 type Point = [i32; 2];
 type Shape = [Point; 4];
 
 pub const ATTACK_DELAY: u8 = 6; //Osäker på denna. nu processeras även attacks med move_tick.
+pub const GRACE_DELAY: u8 = 4;
 
 pub const ROWS: usize = 24;
 pub const COLS: usize = 10;
@@ -52,12 +54,15 @@ pub struct Player {
     incoming: Vec<(u8, u8)>,
     outgoing: Option<(u8, u8)>,
     current_piece: Piece,
+    piece_shadow: Option<Piece>,
     saved_piece: Option<Piece>,
+    has_saved: bool,
     next_piece: Piece,
     score: usize,
     lost: bool,
     gravity: f64,
     update_timer: Instant,
+    grace_count: u8,
 }
 
 impl Player {
@@ -67,16 +72,20 @@ impl Player {
             incoming: Vec::new(),
             outgoing: None,
             current_piece: Piece::random_piece(),
+            piece_shadow: None,
             saved_piece: None,
+            has_saved: false,
             next_piece: Piece::random_piece(),
             score: 0,
             lost: false,
             gravity: TIME_LEVELS[level],
             update_timer: Instant::now(),
+            grace_count: 0,
         }
     }
 
     pub fn update(&mut self) {
+        self.shadow_piece();
         if !self.lost && self.update_timer.elapsed().as_secs_f64() >= self.gravity {
             self.process_attacks();
             self.move_tick();
@@ -89,9 +98,14 @@ impl Player {
             self.current_piece.mov(0, -1);
             if !self.valid_pos(&self.current_piece) {
                 self.current_piece.mov(0, 1);
-                self.place_piece(None);
-                self.process_lines();
-                self.next_piece();
+                if self.grace_count >= GRACE_DELAY {
+                    self.place_piece(None);
+                    self.process_lines();
+                    self.next_piece();
+                    self.grace_count = 0;
+                } else {
+                    self.grace_count += 1;
+                }
             }
         }
     }
@@ -124,10 +138,10 @@ impl Player {
     fn process_attacks(&mut self) {
         let mut rows = 0;
         for (attack, count) in &mut self.incoming {
-            *count -= 1;
             if *count == 0 {
                 rows += *attack;
             }
+            *count -= 1;
         }
         if rows > 0 {
             let mut i = 0;
@@ -154,16 +168,24 @@ impl Player {
             }
             self.board = board;
         }
+        self.incoming.retain(|(_, time)| time > &0);
     }
 
     pub fn save_piece(&mut self) {
-        if let Some(piece) = &mut self.saved_piece {
-            let p = piece.clone();
-            *piece = self.current_piece.clone();
-            self.current_piece = p;
-        } else {
-            self.saved_piece = Some(self.current_piece.clone());
-            self.next_piece();
+        if !self.has_saved {
+            if let Some(piece) = &mut self.saved_piece {
+                let p = piece.clone();
+                let mut pc = self.current_piece.clone();
+                pc.set_position([COLS as i32 / 2, ROWS as i32 - 1]);
+                *piece = pc;
+                self.current_piece = p;
+            } else {
+                let mut pc = self.current_piece.clone();
+                pc.set_position([COLS as i32 / 2, ROWS as i32 - 1]);
+                self.saved_piece = Some(pc);
+                self.next_piece();
+            }
+            self.has_saved = true;
         }
     }
 
@@ -183,8 +205,14 @@ impl Player {
         };
         self.score += score;
         let level = self.score / 5;
-        self.gravity = TIME_LEVELS[level];
-        self.outgoing = Some((attack, ATTACK_DELAY));
+
+        let gravity = TIME_LEVELS[level];
+        if gravity < self.gravity {
+            self.gravity = gravity;
+        }
+        if attack > 0 {
+            self.outgoing = Some((attack, ATTACK_DELAY));
+        }
     }
 
     fn lose_game(&mut self) {
@@ -197,6 +225,14 @@ impl Player {
             let (x, y) = (*x as usize, *y as usize);
             if x < COLS && y < ROWS {
                 board[y][x] = self.current_piece.color as u32;
+            }
+        }
+        if let Some(shadow) = &self.piece_shadow {
+            for [x, y] in &shadow.pos_on_board() {
+                let (x, y) = (*x as usize, *y as usize);
+                if x < COLS && y < ROWS {
+                    board[y][x] = shadow.color as u32;
+                }
             }
         }
         board
@@ -242,6 +278,7 @@ impl Player {
                     lost = true;
                 }
             }
+            self.has_saved = false;
             if lost {
                 self.lose_game();
             }
@@ -251,11 +288,32 @@ impl Player {
     }
 
     pub fn move_current(&mut self, x: i32, y: i32) {
-        let old_shape = self.current_piece.shape;
         self.current_piece.mov(x, y);
         if !self.valid_pos(&self.current_piece) {
-            self.adjust_current();
+            self.current_piece.mov(-x, -y);
         }
+    }
+
+    pub fn drop_current(&mut self) {
+        self.current_piece = self.fast_drop(self.current_piece.clone());
+        self.grace_count = GRACE_DELAY;
+    }
+
+    fn fast_drop(&self, mut piece: Piece) -> Piece {
+        loop {
+            piece.mov(0, -1);
+            if !self.valid_pos(&piece) {
+                piece.mov(0, 1);
+                break;
+            }
+        }
+        piece
+    }
+
+    fn shadow_piece(&mut self) {
+        let mut shadow = self.current_piece.clone();
+        //shadow.color = Color::Shadow;
+        self.piece_shadow = Some(self.fast_drop(shadow));
     }
 
     pub fn rotate_current(&mut self, clockwise: bool) {
@@ -315,14 +373,20 @@ impl Player {
 #[derive(Clone)]
 pub struct Piece {
     shape: Shape,
+    display_shape: [[u32; 4]; 4],
     color: Color,
     position: Point,
 }
 
 impl Piece {
     pub fn new(shape: Shape, color: Color, position: Point) -> Piece {
+        let mut display_shape = [[0; 4]; 4];
+        for [x, y] in &shape {
+            display_shape[(y + 2) as usize][(x + 2) as usize] = color as u32;
+        }
         Piece {
             shape,
+            display_shape,
             color,
             position,
         }
@@ -330,17 +394,24 @@ impl Piece {
 
     pub fn random_piece() -> Piece {
         let rng = rand::thread_rng().gen_range(0, SHAPES.len());
+        let shape = SHAPES[rng];
+        let color = match rng {
+            0 => Color::Color1,
+            1 => Color::Color2,
+            2 => Color::Color3,
+            3 => Color::Color4,
+            4 => Color::Color5,
+            5 => Color::Color6,
+            _ => Color::Color7,
+        };
+        let mut display_shape = [[0; 4]; 4];
+        for [x, y] in &shape {
+            display_shape[(y + 2) as usize][(x + 2) as usize] = color as u32;
+        }
         Piece {
             shape: SHAPES[rng],
-            color: match rng {
-                0 => Color::Color1,
-                1 => Color::Color2,
-                2 => Color::Color3,
-                3 => Color::Color4,
-                4 => Color::Color5,
-                5 => Color::Color6,
-                _ => Color::Color7,
-            },
+            display_shape,
+            color,
             position: [COLS as i32 / 2, ROWS as i32 - 1],
         }
     }
@@ -349,17 +420,17 @@ impl Piece {
         self.shape
     }
 
-    pub fn get_4x4_coloredshape(&self) -> [[u32; 4]; 4] {
-        let mut n_shape = [[0; 4]; 4];
-        for [x, y] in &self.shape {
-            n_shape[(y + 1) as usize][(x + 2) as usize] = self.color as u32;
-        }
-        n_shape
+    pub fn get_display_shape(&self) -> [[u32; 4]; 4] {
+        self.display_shape
     }
 
     fn mov(&mut self, x: i32, y: i32) {
         self.position[0] += x;
         self.position[1] += y;
+    }
+
+    fn set_position(&mut self, position: Point) {
+        self.position = position;
     }
 
     fn rotate(&mut self, clockwise: bool) {
