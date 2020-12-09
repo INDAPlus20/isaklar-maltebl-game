@@ -298,34 +298,26 @@ impl event::EventHandler for AppState {
             PALETTE[7],
         )?;
 
-        let mut a = 1;
-        for i in 0..p1_meter.len() {
-            for _l in 0..p1_meter[i] {
-                graphics::draw(
-                    ctx,
-                    &rectangle,
-                    (ggez::mint::Point2 {
-                        x: P1_BOARD.0 - ATTACK_METER.0,
-                        y: P1_BOARD.1 + P1_BOARD.3 - a as f32 * ATTACK_METER.1,
-                    },),
-                )?;
-                a += 1;
-            }
+        for i in 1..(p1_meter + 1) {
+            graphics::draw(
+                ctx,
+                &rectangle,
+                (ggez::mint::Point2 {
+                    x: P1_BOARD.0 - ATTACK_METER.0,
+                    y: P1_BOARD.1 + P1_BOARD.3 - i as f32 * ATTACK_METER.1,
+                },),
+            )?;
         }
 
-        let mut a = 1;
-        for i in 0..p2_meter.len() {
-            for _l in 0..p2_meter[i] {
-                graphics::draw(
-                    ctx,
-                    &rectangle,
-                    (ggez::mint::Point2 {
-                        x: P2_BOARD.0 - ATTACK_METER.0,
-                        y: P2_BOARD.1 + P2_BOARD.3 - a as f32 * ATTACK_METER.1,
-                    },),
-                )?;
-                a += 1;
-            }
+        for i in 1..(p2_meter + 1) {
+            graphics::draw(
+                ctx,
+                &rectangle,
+                (ggez::mint::Point2 {
+                    x: P2_BOARD.0 - ATTACK_METER.0,
+                    y: P2_BOARD.1 + P2_BOARD.3 - i as f32 * ATTACK_METER.1,
+                },),
+            )?;
         }
 
         // draw grids

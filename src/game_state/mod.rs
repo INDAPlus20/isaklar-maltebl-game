@@ -54,16 +54,12 @@ impl Game {
         saved_pieces
     }
 
-    pub fn get_attackbars(&self) -> [[u32; ROWS]; PLAYER_AMOUNT] {
-        let mut attackbars = [[0; ROWS]; PLAYER_AMOUNT];
+    pub fn get_attackbars(&self) -> [u32; PLAYER_AMOUNT] {
+        let mut attackbars = [0; PLAYER_AMOUNT];
         for p in 0..self.players.len() {
             if p < PLAYER_AMOUNT {
-                let mut rows = 0;
                 for (attack, _) in self.players[p].get_incoming() {
-                    rows += *attack as usize;
-                }
-                for i in 0..(rows.min(ROWS)) {
-                    attackbars[p][i] = game_data::Color::Fixed as u32;
+                    attackbars[p] += *attack as u32;
                 }
             }
         }
