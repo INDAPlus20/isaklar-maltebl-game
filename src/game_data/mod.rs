@@ -138,13 +138,19 @@ impl Player {
     fn process_attacks(&mut self) {
         let mut rows = 0;
         for (attack, count) in &mut self.incoming {
-            if *count == 0 {
+            if *count == 1 {
                 rows += *attack;
             }
             *count -= 1;
         }
         if rows > 0 {
             let mut i = 0;
+            let mut lost = false;
+            for point in &self.board[ROWS - 4 - (rows as usize)] {
+                if *point != 0 {
+                    lost = true;
+                }
+            }
             let mut board = [[0; COLS]; ROWS];
             let rng = rand::thread_rng().gen_range(0, COLS);
             for row in &mut board {
@@ -152,21 +158,17 @@ impl Player {
                     *row = [Color::Fixed as u32; COLS];
                     row[rng] = 0;
                     rows -= 1;
+                    println!("r{:?}", row);
                 } else {
                     *row = self.board[i];
                     i += 1;
                 }
             }
-            let mut lost = false;
-            for point in &self.board[i + 1] {
-                if *point != 0 {
-                    lost = true;
-                }
-            }
+            self.board = board;
+
             if lost {
                 self.lose_game();
             }
-            self.board = board;
         }
         self.incoming.retain(|(_, time)| time > &0);
     }
