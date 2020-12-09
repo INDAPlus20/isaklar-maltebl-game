@@ -1,15 +1,38 @@
 use crate::game_data::{self, Player, COLS, ROWS};
 use ggez::event::KeyCode;
+use std::env;
+
+use libloading::{Library, Symbol};
 
 pub const PLAYER_AMOUNT: usize = 2;
+
+type AIFunc = unsafe fn([[u32; COLS]; ROWS]) -> u32;
+
+#[cfg(test)]
+mod tests;
+
 pub struct Game {
     players: [Player; PLAYER_AMOUNT],
+    ai_lib: Option<Library>,
 }
 
 impl Game {
+    
     pub fn new(init_level: usize) -> Game {
+        let library: Option<Library>;
+        if let Some(lib_path) = env::args().nth(1) {
+            if let Ok(lib) = Library::new(lib_path) {
+                library = Some(lib);
+            } else {
+                library = None;
+            }
+        } else {
+            library = None;
+        }
+
         Game {
             players: [Player::new(init_level), Player::new(init_level)],
+            ai_lib: library,
         }
     }
 
@@ -97,5 +120,17 @@ impl Game {
             KeyCode::I => self.players[1].drop_current(),
             _ => (),
         }
+    }
+
+    fn call_ai_script(&mut self) -> u32 {
+        let mut output = 0;
+
+        unsafe {
+            if let Some(lib) = &self.ai_lib {
+                let func: Symbol<AIFunc> = lib.get(b"ai").expect("Couldn't find ai function");
+                output = func(self.get_boards()[1]);
+            }
+        }
+        output
     }
 }
