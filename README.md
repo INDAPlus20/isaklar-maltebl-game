@@ -8,3 +8,27 @@ The default mode is player vs player, but if you want to play against an ai you 
 The ai-script has to be a shared library with the line ending `.so` for Unix systems or `.dll` for Windows. We have povided an example written in rust in ./ai-example/. 
 
 Your script can be written in any language you choose as long as it can be compiled into a shared library. In rust this is simply done with `rustc --crate-type cdylib <FILENAME>.rs`
+
+
+## Key-bindings
+**Player 1**
+| Key | Action |
+|:----|:-------|
+| A | Move left |
+| D | Move right |
+| E | Rotate clockwise |
+| Q | Rotate counter-clockwise |
+| S | Move down |
+| W | Instant drop |
+| Space | Save piece |
+
+**Player 2**
+| Key | Action |
+|:----|:-------|
+| J | Move left |
+| L | Move right |
+| O | Rotate clockwise |
+| U | Rotate counter-clockwise |
+| K | Move down |
+| I | Instant drop |
+| RShift | Save piece |
