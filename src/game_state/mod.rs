@@ -17,10 +17,14 @@ pub struct Game {
 }
 
 impl Game {
-    
     pub fn new(init_level: usize) -> Game {
         let library: Option<Library>;
         if let Some(lib_path) = env::args().nth(1) {
+            if cfg!(windows) && !lib_path.ends_with(".dll") {
+                panic!("Must use .dll if running an AI in windows!")
+            } else if cfg!(unix) && !lib_path.ends_with(".so") {
+                panic!("Must use .so if running an AI in a 'nix-system!")
+            }
             if let Ok(lib) = Library::new(lib_path) {
                 library = Some(lib);
             } else {
@@ -49,6 +53,7 @@ impl Game {
             }
             target_mod *= -1;
         }
+        println!("{}", self.call_ai_script());
     }
 
     pub fn get_boards(&self) -> [[[u32; COLS]; ROWS]; PLAYER_AMOUNT] {
