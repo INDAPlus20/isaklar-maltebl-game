@@ -10,7 +10,7 @@ fn main() {
     let resource_dir = path::PathBuf::from("./resources");
     let context_builder = ggez::ContextBuilder::new("tetris", "malte och isak")
         .add_resource_path(resource_dir)
-        .window_setup(ggez::conf::WindowSetup::default().title("Test goes brrr"))
+        .window_setup(ggez::conf::WindowSetup::default().title("Tetris goes brrr"))
         .window_mode(
             ggez::conf::WindowMode::default()
                 .dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1) // Set window dimenstions
