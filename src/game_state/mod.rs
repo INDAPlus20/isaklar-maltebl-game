@@ -17,7 +17,6 @@ pub struct Game {
 }
 
 impl Game {
-    
     pub fn new(init_level: usize) -> Game {
         let library: Option<Library>;
         if let Some(lib_path) = env::args().nth(1) {
@@ -48,6 +47,11 @@ impl Game {
                 }
             }
             target_mod *= -1;
+        }
+
+        if let Some(_) = self.ai_lib {
+            let ai_output = self.call_ai_script();
+            self.parse_ai_output(ai_output);
         }
     }
 
@@ -132,5 +136,18 @@ impl Game {
             }
         }
         output
+    }
+
+    fn parse_ai_output(&mut self, output: u32) {
+        match output {
+            1 => self.players[1].move_current(-1, 0),
+            2 => self.players[1].rotate_current(true),
+            3 => self.players[1].move_current(1, 0),
+            4 => self.players[1].rotate_current(false),
+            5 => self.players[1].move_current(0, -1),
+            6 => self.players[1].save_piece(),
+            7 => self.players[1].drop_current(),
+            _ => (),
+        }
     }
 }
