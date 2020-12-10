@@ -34,7 +34,7 @@ fn line_clear() {
         player.rotate_current(true);
         let mut loop_var = 0;
         println!("-------------------------------------------");
-        for line in &player.get_board() {
+        for line in &player.get_board_visual() {
             loop_var += 1;
             if loop_var > (ROWS - 4) {
                 break;
@@ -91,7 +91,7 @@ fn console_debug() {
         print!("{}[2J", 27 as char);
         let mut loop_var = 0;
         println!("-------------------------------------------");
-        for line in &player.get_board() {
+        for line in &player.get_board_visual() {
             loop_var += 1;
             if loop_var > (ROWS - 4) {
                 break;

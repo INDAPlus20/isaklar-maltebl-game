@@ -158,7 +158,6 @@ impl Player {
                     *row = [Color::Fixed as u32; COLS];
                     row[rng] = 0;
                     rows -= 1;
-                    println!("r{:?}", row);
                 } else {
                     *row = self.board[i];
                     i += 1;
@@ -222,6 +221,22 @@ impl Player {
     }
 
     pub fn get_board(&self) -> [[u32; COLS]; ROWS] {
+        self.board
+    }
+
+    pub fn get_current_shape(&self) -> [[i32; 2]; 4] {
+        self.current_piece.pos_on_board()
+    }
+
+    pub fn get_saved_shape(&self) -> [[i32; 2]; 4] {
+        if let Some(piece) = &self.saved_piece {
+            piece.get_shape()
+        } else {
+            [[0; 2]; 4]
+        }
+    }
+
+    pub fn get_board_visual(&self) -> [[u32; COLS]; ROWS] {
         let mut board = self.board;
         for [x, y] in &self.current_piece.pos_on_board() {
             let (x, y) = (*x as usize, *y as usize);
@@ -448,7 +463,7 @@ impl Piece {
         }
     }
 
-    fn pos_on_board(&self) -> Shape {
+    pub fn pos_on_board(&self) -> Shape {
         let mut board_pos = [[0; 2]; 4];
         for i in 0..4 {
             board_pos[i][0] = self.position[0] + self.shape[i][0];
