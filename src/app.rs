@@ -72,10 +72,20 @@ pub const PALETTE: [Color; 8] = [
     Color::new(127.0 / 255.0, 127.0 / 255.0, 127.0 / 255.0, 1.0), // Grey
 ];
 
+pub const GHOST_PALETTE: [Color; 7] = [
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0.5), // Cyan
+    Color::new(255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5), // Yellow
+    Color::new(128.0 / 255.0, 0.0 / 255.0, 128.0 / 255.0, 0.5), // Purple
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5),   // Green
+    Color::new(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 0.5),   // Red
+    Color::new(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, 0.5),   // Blue
+    Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.5), // Orange
+];
+
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
 pub struct AppState {
     game_state: Game,
-    block_palatte: [Mesh; 8],
+    block_palatte: [Mesh; 15],
     grid_mesh: Mesh,
     small_block_palatte: [Mesh; 8],
     font: Font,
@@ -386,7 +396,7 @@ impl event::EventHandler for AppState {
     }
 }
 /// Generates the meshes for the tetromino block
-fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
+fn generate_blocks(ctx: &mut Context) -> [Mesh; 15] {
     [
         Mesh::new_rectangle(
             ctx,
@@ -442,6 +452,55 @@ fn generate_blocks(ctx: &mut Context) -> [Mesh; 8] {
             DrawMode::fill(),
             Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
             PALETTE[7],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[0],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[1],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[2],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[3],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[4],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[5],
+        )
+        .expect("Failed creating blocks"),
+        Mesh::new_rectangle(
+            ctx,
+            DrawMode::fill(),
+            Rect::new_i32(0, 0, BLOCK_SIZE.0 as i32, BLOCK_SIZE.1 as i32),
+            GHOST_PALETTE[6],
         )
         .expect("Failed creating blocks"),
     ]
