@@ -1,11 +1,11 @@
 use crate::game_state::Game;
 
-use ggez::event::{self, EventHandler, KeyCode, KeyMods};
+use ggez::event::{self, KeyCode, KeyMods};
 use ggez::graphics::{
-    self, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
+    self, Color, DrawMode, Font, Mesh, MeshBuilder, Rect, Scale, Text,
 };
-use ggez::nalgebra::Point2;
-use ggez::{Context, ContextBuilder, GameResult};
+
+use ggez::{Context, GameResult};
 use graphics::TextFragment;
 
 /// size of the window
@@ -114,7 +114,7 @@ impl event::EventHandler for AppState {
 
     // update the graphics
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // Clear screen with a the background color
+        // Clear screen with the background color
         graphics::clear(ctx, BACKGROUND_COLOR);
 
         // draw boards
