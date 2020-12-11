@@ -15,7 +15,13 @@ pub enum Color {
     Color6 = 6,
     Color7 = 7,
     Fixed = 8,
-    Shadow = 9,
+    Shadow1 = 9,
+    Shadow2 = 10,
+    Shadow3 = 11,
+    Shadow4 = 12,
+    Shadow5 = 13,
+    Shadow6 = 14,
+    Shadow7 = 15,
 }
 
 type Point = [i32; 2];
@@ -329,7 +335,15 @@ impl Player {
 
     fn shadow_piece(&mut self) {
         let mut shadow = self.current_piece.clone();
-        //shadow.color = Color::Shadow;
+        shadow.color = match shadow.color as u32 {
+            1 => Color::Shadow1,
+            2 => Color::Shadow2,
+            3 => Color::Shadow3,
+            4 => Color::Shadow4,
+            5 => Color::Shadow5,
+            6 => Color::Shadow6,
+            _ => Color::Shadow7,
+        };
         self.piece_shadow = Some(self.fast_drop(shadow));
     }
 

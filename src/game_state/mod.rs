@@ -6,7 +6,7 @@ use libloading::{Library, Symbol};
 
 pub const PLAYER_AMOUNT: usize = 2;
 
-type AIFunc = unsafe fn([[u32; 10]; 24], [[i32; 2]; 4], [[i32; 2]; 4]) -> u32;
+type AIFunc = unsafe fn(*const [[u32; 10]; 24], *const [[i32; 2]; 4], *const [[i32; 2]; 4]) -> u32;
 
 #[cfg(test)]
 mod tests;
@@ -149,7 +149,7 @@ impl Game {
             if let Some(lib) = &self.ai_lib {
                 let func: Symbol<AIFunc> = lib.get(b"ai").expect("Couldn't find ai function");
                 let (board, current_piece, saved_piece) = self.get_player_data(1);
-                output = func(board, current_piece, saved_piece);
+                output = func(&board, &current_piece, &saved_piece);
             }
         }
         output
@@ -158,12 +158,12 @@ impl Game {
     fn parse_ai_output(&mut self, output: u32) {
         match output {
             1 => self.players[1].move_current(-1, 0),
-            2 => self.players[1].rotate_current(true),
-            3 => self.players[1].move_current(1, 0),
+            2 => self.players[1].move_current(1, 0),
+            3 => self.players[1].rotate_current(true),
             4 => self.players[1].rotate_current(false),
             5 => self.players[1].move_current(0, -1),
-            6 => self.players[1].save_piece(),
-            7 => self.players[1].drop_current(),
+            6 => self.players[1].drop_current(),
+            7 => self.players[1].save_piece(),
             _ => (),
         }
     }

@@ -2,12 +2,12 @@
 
 We have created a 1v1 Tetris game in 🦀Rust🦀, with the `ggez` library.
 
-To run, you can either use `cargo run` or use the .exe file in ./target/release/. 
+To run, you can either use `cargo run` or compile and use the .exe file in ./target/release/. 
 
 The default mode is player vs player, but if you want to play against an ai you can provide the ai-script by running the application with the file-path as an argument.
 The ai-script has to be a shared library with the line ending `.so` for Unix systems or `.dll` for Windows. We have povided an example written in rust in ./ai-example/. 
 
-Your script can be written in any language you choose as long as it can be compiled into a shared library. In rust this is simply done with `rustc --crate-type cdylib <FILENAME>.rs`
+Your script can be written in any language you choose as long as it can be compiled into a shared library. In rust this is simply done with `rustc --crate-type cdylib <FILENAME>.rs` (remember to do this before testing the example ai script). For exact specifications look below.
 
 
 ## Key-bindings
@@ -32,3 +32,25 @@ Your script can be written in any language you choose as long as it can be compi
 | K | Move down |
 | I | Instant drop |
 | RShift | Save piece |
+
+**AI-script specification**
+
+The ai script must include a function equivalent to `fn ai(*const [[u32; 10]; 24], *const [[i32; 2]; 4], *const [[i32; 2]; 4]) -> u32`. 
+- The first argument in this fuction represents the board, 10 wide and 24 high (four top rows hidden) with already dropped pieces in their colours, where any value != 0 means there is a block there. 
+- The second argument represents the currently controlled piece adjust to its position on the board meaning [[3,2],[4,2],[5,2],[6,2]] represents an horizontal I-piece occupying the 3rd row from the bottom, one block from the right edge of the board. 
+- The third argument represents the currently saved piece, not adjusted for position on the board, meaning an z-piece would be: [[-1,-1], [0,-1], [0,0], [1,0]]
+- The output u32 designates an action for the ai to perform according to the table below.
+
+For further information look around in the source code and ai-example or contact us.
+
+**AI**
+| Value | Action |
+|:----|:-------|
+| 1 | Move left |
+| 2 | Move right |
+| 3 | Rotate clockwise |
+| 4 | Rotate counter-clockwise |
+| 5 | Move down |
+| 6 | Instant drop |
+| 7 | Save piece |
+| 0 or 8+ | Do nothing |
