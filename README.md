@@ -33,7 +33,7 @@ Your script can be written in any language you choose as long as it can be compi
 | I | Instant drop |
 | RShift | Save piece |
 
-**AI-script specification**
+## AI-script specification
 
 The ai script must include a function equivalent to `fn ai(*const [[u32; 10]; 24], *const [[i32; 2]; 4], *const [[i32; 2]; 4]) -> u32`. 
 - The first argument in this fuction represents the board, 10 wide and 24 high (four top rows hidden) with already dropped pieces in their colours, where any value != 0 means there is a block there. 
