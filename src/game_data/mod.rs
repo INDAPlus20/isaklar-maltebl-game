@@ -244,18 +244,18 @@ impl Player {
 
     pub fn get_board_visual(&self) -> [[u32; COLS]; ROWS] {
         let mut board = self.board;
-        for [x, y] in &self.current_piece.pos_on_board() {
-            let (x, y) = (*x as usize, *y as usize);
-            if x < COLS && y < ROWS {
-                board[y][x] = self.current_piece.color as u32;
-            }
-        }
         if let Some(shadow) = &self.piece_shadow {
             for [x, y] in &shadow.pos_on_board() {
                 let (x, y) = (*x as usize, *y as usize);
                 if x < COLS && y < ROWS {
                     board[y][x] = shadow.color as u32;
                 }
+            }
+        }
+        for [x, y] in &self.current_piece.pos_on_board() {
+            let (x, y) = (*x as usize, *y as usize);
+            if x < COLS && y < ROWS {
+                board[y][x] = self.current_piece.color as u32;
             }
         }
         board
