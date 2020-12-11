@@ -73,13 +73,13 @@ pub const PALETTE: [Color; 8] = [
 ];
 
 pub const GHOST_PALETTE: [Color; 7] = [
-    Color::new(0.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0.5), // Cyan
-    Color::new(255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5), // Yellow
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0.3), // Cyan
+    Color::new(255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.3), // Yellow
     Color::new(128.0 / 255.0, 0.0 / 255.0, 128.0 / 255.0, 0.5), // Purple
-    Color::new(0.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5),   // Green
-    Color::new(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 0.5),   // Red
-    Color::new(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, 0.5),   // Blue
-    Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.5), // Orange
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.3),   // Green
+    Color::new(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 0.3),   // Red
+    Color::new(0.0 / 255.0, 0.0 / 255.0, 175.0 / 255.0, 0.5),   // Blue
+    Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.3), // Orange
 ];
 
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
