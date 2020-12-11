@@ -1,4 +1,4 @@
-use crate::game_data::{ Player, COLS, ROWS};
+use crate::game_data::{Player, COLS, ROWS};
 use ggez::event::KeyCode;
 use std::env;
 
@@ -112,6 +112,10 @@ impl Game {
             scores[p] = self.players[p].get_score() as u32;
         }
         scores
+    }
+
+    pub fn get_losts(&self) -> [bool; PLAYER_AMOUNT] {
+        [self.players[0].get_lost(), self.players[1].get_lost()]
     }
 
     //Only set for 2 players

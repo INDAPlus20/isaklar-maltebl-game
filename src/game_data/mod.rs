@@ -277,6 +277,10 @@ impl Player {
         self.score
     }
 
+    pub fn get_lost(&self) -> bool {
+        self.lost
+    }
+
     pub fn add_incoming(&mut self, attack: (u8, u8)) {
         self.incoming.push(attack);
     }

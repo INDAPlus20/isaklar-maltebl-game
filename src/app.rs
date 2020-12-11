@@ -1,9 +1,7 @@
 use crate::game_state::Game;
 
 use ggez::event::{self, KeyCode, KeyMods};
-use ggez::graphics::{
-    self, Color, DrawMode, Font, Mesh, MeshBuilder, Rect, Scale, Text,
-};
+use ggez::graphics::{self, Color, DrawMode, Font, Mesh, MeshBuilder, Rect, Scale, Text};
 
 use ggez::{Context, GameResult};
 use graphics::TextFragment;
@@ -108,7 +106,13 @@ impl AppState {
 impl event::EventHandler for AppState {
     // update the game logic
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        self.game_state.update();
+        let [p1_lost, p2_lost] = self.game_state.get_losts();
+
+        if p1_lost || p2_lost {
+            // if either player has lost
+        } else {
+            self.game_state.update();
+        }
         Ok(())
     }
 
@@ -378,6 +382,41 @@ impl event::EventHandler for AppState {
                 y: P2_SCORE_PLACEMENT.1 - (p2_dimensions.1 as f32) / 2.0,
             },),
         )?;
+
+        // if anyone lost draw
+        let [p1_lost, p2_lost] = self.game_state.get_losts();
+
+        if p1_lost {
+            let p2_win = TextFragment::new("P2 wins!")
+                .font(self.font)
+                .scale(Scale { x: 100.0, y: 100.0 });
+            let p2_win_text = Text::new(p2_win);
+            let dimensions = p2_win_text.dimensions(ctx);
+
+            graphics::draw(
+                ctx,
+                &p2_win_text,
+                (ggez::mint::Point2 {
+                    x: SCREEN_SIZE.0 / 2.0 - (dimensions.0 as f32) / 2.0,
+                    y: SCREEN_SIZE.1 / 2.0 - (dimensions.1 as f32) / 2.0,
+                },),
+            )?;
+        } else if p2_lost {
+            let p1_win = TextFragment::new("P1 wins!")
+                .font(self.font)
+                .scale(Scale { x: 100.0, y: 100.0 });
+            let p1_win_text = Text::new(p1_win);
+            let dimensions = p1_win_text.dimensions(ctx);
+
+            graphics::draw(
+                ctx,
+                &p1_win_text,
+                (ggez::mint::Point2 {
+                    x: SCREEN_SIZE.0 / 2.0 - (dimensions.0 as f32) / 2.0,
+                    y: SCREEN_SIZE.1 / 2.0 - (dimensions.1 as f32) / 2.0,
+                },),
+            )?;
+        }
 
         // present the graphics to the graphics engine
         graphics::present(ctx)?;
