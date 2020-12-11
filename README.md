@@ -37,7 +37,7 @@ Your script can be written in any language you choose as long as it can be compi
 
 The ai script must include a function equivalent to `fn ai(*const [[u32; 10]; 24], *const [[i32; 2]; 4], *const [[i32; 2]; 4]) -> u32`. 
 - The first argument in this fuction represents the board, 10 wide and 24 high (four top rows hidden) with already dropped pieces in their colours, where any value != 0 means there is a block there. 
-- The second argument represents the currently controlled piece adjust to its position on the board meaning [[3,2],[4,2],[5,2],[6,2]] represents an horizontal I-piece occupying the 3rd row from the bottom, one block from the right edge of the board. 
+- The second argument represents the currently controlled piece adjusted to its position on the board meaning [[3,2],[4,2],[5,2],[6,2]] represents an horizontal I-piece occupying the 3rd row from the bottom, one block from the right edge of the board. 
 - The third argument represents the currently saved piece, not adjusted for position on the board, meaning an z-piece would be: [[-1,-1], [0,-1], [0,0], [1,0]]
 - The output u32 designates an action for the ai to perform according to the table below.
 
