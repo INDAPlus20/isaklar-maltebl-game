@@ -1,11 +1,11 @@
 use crate::game_state::Game;
 
-use ggez::event::{self, EventHandler, KeyCode, KeyMods};
+use ggez::event::{self, KeyCode, KeyMods};
 use ggez::graphics::{
-    self, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
+    self, Color, DrawMode, Font, Mesh, MeshBuilder, Rect, Scale, Text,
 };
-use ggez::nalgebra::Point2;
-use ggez::{Context, ContextBuilder, GameResult};
+
+use ggez::{Context, GameResult};
 use graphics::TextFragment;
 
 /// size of the window
@@ -73,13 +73,13 @@ pub const PALETTE: [Color; 8] = [
 ];
 
 pub const GHOST_PALETTE: [Color; 7] = [
-    Color::new(0.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0.5), // Cyan
-    Color::new(255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5), // Yellow
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 0.3), // Cyan
+    Color::new(255.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.3), // Yellow
     Color::new(128.0 / 255.0, 0.0 / 255.0, 128.0 / 255.0, 0.5), // Purple
-    Color::new(0.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.5),   // Green
-    Color::new(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 0.5),   // Red
-    Color::new(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, 0.5),   // Blue
-    Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.5), // Orange
+    Color::new(0.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0, 0.3),   // Green
+    Color::new(255.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 0.3),   // Red
+    Color::new(0.0 / 255.0, 0.0 / 255.0, 175.0 / 255.0, 0.5),   // Blue
+    Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.3), // Orange
 ];
 
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
@@ -114,7 +114,7 @@ impl event::EventHandler for AppState {
 
     // update the graphics
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        // Clear screen with a the background color
+        // Clear screen with the background color
         graphics::clear(ctx, BACKGROUND_COLOR);
 
         // draw boards

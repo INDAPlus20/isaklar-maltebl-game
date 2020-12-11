@@ -1,11 +1,11 @@
-use crate::game_data::{self, Player, COLS, ROWS};
+use crate::game_data::{ Player, COLS, ROWS};
 use ggez::event::KeyCode;
 use std::env;
 
 use libloading::{Library, Symbol};
 
 pub const PLAYER_AMOUNT: usize = 2;
-
+/// Function signature for the ai-script
 type AIFunc = unsafe fn(*const [[u32; 10]; 24], *const [[i32; 2]; 4], *const [[i32; 2]; 4]) -> u32;
 
 #[cfg(test)]
@@ -39,7 +39,7 @@ impl Game {
             ai_lib: library,
         }
     }
-
+    /// The game-tick update function
     pub fn update(&mut self) {
         // update game tick for players
         let mut target_mod: i32 = 1; //Pairs, you attack the one next to you
@@ -58,14 +58,14 @@ impl Game {
             self.parse_ai_output(ai_output);
         }
     }
-
+    /// Gets and returns the graphical boardstate of the players
     pub fn get_boards(&self) -> [[[u32; COLS]; ROWS]; PLAYER_AMOUNT] {
         [
             self.players[0].get_board_visual(),
             self.players[1].get_board_visual(),
         ]
     }
-
+    /// Gets and returns the next pieces of the players
     pub fn get_next_pieces(&self) -> [[[u32; 4]; 4]; PLAYER_AMOUNT] {
         let mut next_pieces = [[[0; 4]; 4]; PLAYER_AMOUNT];
         for p in 0..self.players.len() {
@@ -73,7 +73,7 @@ impl Game {
         }
         next_pieces
     }
-
+    /// Gets and returns the saved pieces of the players
     pub fn get_saved_pieces(&self) -> [[[u32; 4]; 4]; PLAYER_AMOUNT] {
         let mut saved_pieces = [[[0; 4]; 4]; PLAYER_AMOUNT];
         for p in 0..self.players.len() {
@@ -83,7 +83,7 @@ impl Game {
         }
         saved_pieces
     }
-
+    /// Gets the incoming attacks from players and returns formatted data
     pub fn get_attackbars(&self) -> [u32; PLAYER_AMOUNT] {
         let mut attackbars = [0; PLAYER_AMOUNT];
         for p in 0..self.players.len() {
@@ -93,7 +93,7 @@ impl Game {
         }
         attackbars
     }
-
+    /// Returns formatted data for the ai-script, without block-projection.
     pub fn get_player_data(
         &self,
         index: usize,
