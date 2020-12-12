@@ -80,6 +80,8 @@ pub const GHOST_PALETTE: [Color; 7] = [
     Color::new(255.0 / 255.0, 127.0 / 255.0, 0.0 / 255.0, 0.3), // Orange
 ];
 
+const INIT_LEVEL: usize = 5;
+
 // contains fields like the game struct, ai-script, etc. Basically stores the game-state + resources
 pub struct AppState {
     game_state: Game,
@@ -431,7 +433,11 @@ impl event::EventHandler for AppState {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        self.game_state.key_down(keycode);
+        if keycode == KeyCode::R {
+            self.game_state.restart(INIT_LEVEL);
+        } else {
+            self.game_state.key_down(keycode);
+        }
     }
 }
 /// Generates the meshes for the tetromino block
