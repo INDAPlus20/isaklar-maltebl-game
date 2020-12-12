@@ -1,4 +1,4 @@
-use crate::game_data::{ Player, COLS, ROWS};
+use crate::game_data::{Player, COLS, ROWS};
 use ggez::event::KeyCode;
 use std::env;
 
@@ -13,7 +13,7 @@ mod tests;
 
 pub struct Game {
     players: [Player; PLAYER_AMOUNT],
-    ai_lib: Option<Library>,
+    ai_lib: [Option<Library>; 2],
 }
 
 impl Game {
@@ -33,10 +33,25 @@ impl Game {
         } else {
             library = None;
         }
+        let library2: Option<Library>;
+        if let Some(lib_path2) = env::args().nth(2) {
+            if cfg!(windows) && !lib_path2.ends_with(".dll") {
+                panic!("Must use .dll if running an AI in windows!")
+            } else if cfg!(unix) && !lib_path2.ends_with(".so") {
+                panic!("Must use .so if running an AI in a 'nix-system!")
+            }
+            if let Ok(lib2) = Library::new(lib_path2) {
+                library2 = Some(lib2);
+            } else {
+                library2 = None;
+            }
+        } else {
+            library2 = None;
+        }
 
         Game {
             players: [Player::new(init_level), Player::new(init_level)],
-            ai_lib: library,
+            ai_lib: [library2, library],
         }
     }
     /// The game-tick update function
@@ -52,10 +67,11 @@ impl Game {
 
             target_mod *= -1;
         }
-
-        if self.ai_lib.is_some() {
-            let ai_output = self.call_ai_script();
-            self.parse_ai_output(ai_output);
+        for i in 0..self.ai_lib.len() {
+            if self.ai_lib[i].is_some() {
+                let ai_output = self.call_ai_script(i);
+                self.parse_ai_output(i, ai_output);
+            }
         }
     }
     /// Gets and returns the graphical boardstate of the players
@@ -116,18 +132,20 @@ impl Game {
 
     //Only set for 2 players
     pub fn key_down(&mut self, key: KeyCode) {
-        match key {
-            // P1 controlls
-            KeyCode::A => self.players[0].move_current(-1, 0),
-            KeyCode::E => self.players[0].rotate_current(true),
-            KeyCode::D => self.players[0].move_current(1, 0),
-            KeyCode::Q => self.players[0].rotate_current(false),
-            KeyCode::S => self.players[0].move_current(0, -1),
-            KeyCode::W => self.players[0].drop_current(),
-            KeyCode::Space => self.players[0].save_piece(),
-            _ => (),
+        if self.ai_lib[0].is_none() {
+            match key {
+                // P1 controlls
+                KeyCode::A => self.players[0].move_current(-1, 0),
+                KeyCode::E => self.players[0].rotate_current(true),
+                KeyCode::D => self.players[0].move_current(1, 0),
+                KeyCode::Q => self.players[0].rotate_current(false),
+                KeyCode::S => self.players[0].move_current(0, -1),
+                KeyCode::W => self.players[0].drop_current(),
+                KeyCode::Space => self.players[0].save_piece(),
+                _ => (),
+            }
         }
-        if self.ai_lib.is_none() {
+        if self.ai_lib[1].is_none() {
             match key {
                 // P2 controlls
                 KeyCode::J => self.players[1].move_current(-1, 0),
@@ -142,11 +160,11 @@ impl Game {
         }
     }
 
-    fn call_ai_script(&mut self) -> u32 {
+    fn call_ai_script(&mut self, player_index: usize) -> u32 {
         let mut output = 0;
 
         unsafe {
-            if let Some(lib) = &self.ai_lib {
+            if let Some(lib) = &self.ai_lib[player_index] {
                 let func: Symbol<AIFunc> = lib.get(b"ai").expect("Couldn't find ai function");
                 let (board, current_piece, saved_piece) = self.get_player_data(1);
                 output = func(&board, &current_piece, &saved_piece);
@@ -155,15 +173,15 @@ impl Game {
         output
     }
 
-    fn parse_ai_output(&mut self, output: u32) {
+    fn parse_ai_output(&mut self, player_index: usize, output: u32) {
         match output {
-            1 => self.players[1].move_current(-1, 0),
-            2 => self.players[1].move_current(1, 0),
-            3 => self.players[1].rotate_current(true),
-            4 => self.players[1].rotate_current(false),
-            5 => self.players[1].move_current(0, -1),
-            6 => self.players[1].drop_current(),
-            7 => self.players[1].save_piece(),
+            1 => self.players[player_index].move_current(-1, 0),
+            2 => self.players[player_index].move_current(1, 0),
+            3 => self.players[player_index].rotate_current(true),
+            4 => self.players[player_index].rotate_current(false),
+            5 => self.players[player_index].move_current(0, -1),
+            6 => self.players[player_index].drop_current(),
+            7 => self.players[player_index].save_piece(),
             _ => (),
         }
     }
