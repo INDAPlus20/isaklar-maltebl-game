@@ -2,6 +2,8 @@
 
 We have created a 1v1 Tetris game in 🦀Rust🦀, with the `ggez` library.
 
+![alt text](https://github.com/INDAPlus20/isaklar-maltebl-game/blob/main/tetris.png?raw=true)
+
 To run, you can either use `cargo run` or compile and use the .exe file in ./target/release/. 
 
 The default mode is player vs player, but if you want to play against an ai you can provide the ai-script by running the application with the file-path as an argument.

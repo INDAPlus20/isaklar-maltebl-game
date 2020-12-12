@@ -130,6 +130,10 @@ impl Game {
         scores
     }
 
+    pub fn get_losts(&self) -> [bool; PLAYER_AMOUNT] {
+        [self.players[0].get_lost(), self.players[1].get_lost()]
+    }
+
     //Only set for 2 players
     pub fn key_down(&mut self, key: KeyCode) {
         if self.ai_lib[0].is_none() {
