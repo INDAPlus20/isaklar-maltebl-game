@@ -170,7 +170,7 @@ impl Game {
         unsafe {
             if let Some(lib) = &self.ai_lib[player_index] {
                 let func: Symbol<AIFunc> = lib.get(b"ai").expect("Couldn't find ai function");
-                let (board, current_piece, saved_piece) = self.get_player_data(1);
+                let (board, current_piece, saved_piece) = self.get_player_data(player_index);
                 output = func(&board, &current_piece, &saved_piece);
             }
         }
