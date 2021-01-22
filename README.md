@@ -11,8 +11,10 @@ The ai-script has to be a shared library with the line ending `.so` for Unix sys
 
 Your script can be written in any language you choose as long as it can be compiled into a shared library. In rust this is simply done with `rustc --crate-type cdylib <FILENAME>.rs` (remember to do this before testing the example ai script). For exact specifications look below.
 
-
 ## Key-bindings
+
+You can press `R` to restart the game at any time.
+
 **Player 1**
 | Key | Action |
 |:----|:-------|

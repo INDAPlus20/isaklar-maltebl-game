@@ -164,6 +164,10 @@ impl Game {
         }
     }
 
+    pub fn restart(&mut self, init_level: usize) {
+        self.players = [Player::new(init_level), Player::new(init_level)];
+    }
+
     fn call_ai_script(&mut self, player_index: usize) -> u32 {
         let mut output = 0;
 
